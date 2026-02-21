@@ -1,5 +1,6 @@
 import { User } from '@/types';
-import { useStore } from '@/store/useStore';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { computeCompatibility } from '@/lib/utils-drive';
 import {
   Dialog,
@@ -11,7 +12,7 @@ import {
 import { Star, Shield, MessageCircle, Pencil, Music, Calendar, GraduationCap, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { api } from '@/lib/api';
+
 
 interface Props {
   user: User;
@@ -20,7 +21,13 @@ interface Props {
 }
 
 const ProfileOverlay = ({ user, open, onClose }: Props) => {
-  const { currentUser } = useStore();
+  const { profile } = useAuth();
+  const currentUser = profile ? {
+    id: profile.id, name: profile.email, preferredName: profile.preferred_name || undefined,
+    email: profile.email, year: profile.year || '', major: profile.major || '',
+    rating: 5.0, interests: profile.interests || [], clubs: profile.clubs || [],
+    college: profile.college || '', musicTag: profile.music_tag || undefined,
+  } : null;
   const [editing, setEditing] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const isOwnProfile = currentUser?.id === user.id;
@@ -38,8 +45,12 @@ const ProfileOverlay = ({ user, open, onClose }: Props) => {
           {/* Header */}
           <div className="ucsd-gradient p-8 pb-12 rounded-t-lg">
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground text-3xl font-bold shadow-lg">
-                {(user.preferredName || user.name).charAt(0)}
+              <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground text-3xl font-bold shadow-lg overflow-hidden">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} className="w-full h-full object-cover" alt={user.preferredName || user.name} />
+                ) : (
+                  (user.preferredName || user.name).charAt(0)
+                )}
               </div>
               <div>
                 <h2 className="text-2xl font-display font-bold text-primary-foreground">
@@ -201,9 +212,20 @@ const EditProfileForm = ({ user, onDone }: { user: User; onDone: () => void }) =
     setList(list.filter(t => t !== tag));
   };
 
-  const handleSave = () => {
-    api.updateMe({ preferredName, college, year, major, interests, clubs });
-    toast.success('Profile updated! 🎉');
+  const handleSave = async () => {
+    const { error } = await supabase.from('profiles').update({
+      preferred_name: preferredName,
+      college,
+      year,
+      major,
+      interests,
+      clubs,
+    } as any).eq('id', user.id);
+    if (error) {
+      toast.error('Failed to update profile');
+    } else {
+      toast.success('Profile updated! 🎉');
+    }
     onDone();
   };
 

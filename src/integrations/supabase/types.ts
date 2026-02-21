@@ -14,7 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          age: number | null
+          avatar_url: string | null
+          clubs: string[] | null
+          college: string | null
+          created_at: string | null
+          email: string
+          gender: string | null
+          id: string
+          interests: string[] | null
+          major: string | null
+          music_tag: string | null
+          onboarding_complete: boolean | null
+          preferred_name: string | null
+          role: string | null
+          year: string | null
+        }
+        Insert: {
+          age?: number | null
+          avatar_url?: string | null
+          clubs?: string[] | null
+          college?: string | null
+          created_at?: string | null
+          email: string
+          gender?: string | null
+          id: string
+          interests?: string[] | null
+          major?: string | null
+          music_tag?: string | null
+          onboarding_complete?: boolean | null
+          preferred_name?: string | null
+          role?: string | null
+          year?: string | null
+        }
+        Update: {
+          age?: number | null
+          avatar_url?: string | null
+          clubs?: string[] | null
+          college?: string | null
+          created_at?: string | null
+          email?: string
+          gender?: string | null
+          id?: string
+          interests?: string[] | null
+          major?: string | null
+          music_tag?: string | null
+          onboarding_complete?: boolean | null
+          preferred_name?: string | null
+          role?: string | null
+          year?: string | null
+        }
+        Relationships: []
+      }
+      ride_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          rider_id: string
+          status: string | null
+          trip_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          rider_id: string
+          status?: string | null
+          trip_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          rider_id?: string
+          status?: string | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ride_requests_rider_id_fkey"
+            columns: ["rider_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ride_requests_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trips: {
+        Row: {
+          comp_rate: number | null
+          coordinates: Json | null
+          created_at: string | null
+          departure_time: string
+          driver_id: string
+          from_location: string | null
+          id: string
+          notes: string | null
+          seats_available: number
+          seats_total: number
+          to_location: string
+        }
+        Insert: {
+          comp_rate?: number | null
+          coordinates?: Json | null
+          created_at?: string | null
+          departure_time: string
+          driver_id: string
+          from_location?: string | null
+          id?: string
+          notes?: string | null
+          seats_available?: number
+          seats_total?: number
+          to_location: string
+        }
+        Update: {
+          comp_rate?: number | null
+          coordinates?: Json | null
+          created_at?: string | null
+          departure_time?: string
+          driver_id?: string
+          from_location?: string | null
+          id?: string
+          notes?: string | null
+          seats_available?: number
+          seats_total?: number
+          to_location?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trips_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

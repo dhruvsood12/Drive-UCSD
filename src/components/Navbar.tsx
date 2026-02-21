@@ -1,7 +1,7 @@
 import { useStore } from '@/store/useStore';
 import { Car, Plus, UserCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import ProfileDrawer from './ProfileDrawer';
+import ProfileOverlay from './ProfileOverlay';
 import { useState } from 'react';
 
 const Navbar = () => {
@@ -82,9 +82,9 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Profile Drawer */}
+      {/* Profile Overlay */}
       {currentUser && (
-        <ProfileDrawer user={currentUser} open={showProfile} onClose={() => setShowProfile(false)} />
+        <ProfileOverlay user={currentUser} open={showProfile} onClose={() => setShowProfile(false)} />
       )}
     </nav>
   );

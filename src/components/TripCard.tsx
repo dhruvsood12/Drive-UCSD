@@ -2,7 +2,7 @@ import { Trip, RideRequest } from '@/types';
 import { useStore } from '@/store/useStore';
 import { computeCompatibility, formatDepartureTime } from '@/lib/utils-drive';
 import CompatibilityBreakdown from './CompatibilityBreakdown';
-import ProfileDrawer from './ProfileDrawer';
+import ProfileOverlay from './ProfileOverlay';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Clock, DollarSign, Users, Star, Check, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -254,9 +254,9 @@ const TripCard = ({ trip }: Props) => {
         )}
       </AnimatePresence>
 
-      {/* Profile Drawer */}
+      {/* Profile Overlay */}
       {driver && (
-        <ProfileDrawer user={driver} open={showProfile} onClose={() => setShowProfile(false)} />
+        <ProfileOverlay user={driver} open={showProfile} onClose={() => setShowProfile(false)} />
       )}
     </>
   );

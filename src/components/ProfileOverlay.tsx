@@ -1,9 +1,15 @@
 import { User } from '@/types';
 import { useStore } from '@/store/useStore';
 import { computeCompatibility } from '@/lib/utils-drive';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, Shield, MessageCircle, Pencil, Music, Calendar, GraduationCap } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Star, Shield, MessageCircle, Pencil, Music, Calendar, GraduationCap, X } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 
@@ -20,200 +26,145 @@ const ProfileOverlay = ({ user, open, onClose }: Props) => {
   const isOwnProfile = currentUser?.id === user.id;
   const compatibility = currentUser && !isOwnProfile ? computeCompatibility(currentUser, user) : null;
 
-  const handleEsc = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-  }, [onClose]);
-
-  useEffect(() => {
-    if (open) {
-      document.addEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = '';
-    };
-  }, [open, handleEsc]);
-
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-foreground/50 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ scale: 0.92, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.92, opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-            className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-2xl shadow-2xl border border-border"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+    <>
+      <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 gap-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{user.preferredName || user.name}</DialogTitle>
+            <DialogDescription>Profile details</DialogDescription>
+          </DialogHeader>
 
-            {/* Header */}
-            <div className="ucsd-gradient p-8 pb-12 rounded-t-2xl">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground text-3xl font-bold shadow-lg">
-                  {(user.preferredName || user.name).charAt(0)}
-                </div>
-                <div>
-                  <h2 className="text-2xl font-display font-bold text-primary-foreground">
-                    {user.preferredName || user.name}
-                  </h2>
-                  <p className="text-sm text-primary-foreground/70">{user.name}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <Shield className="w-3.5 h-3.5 text-secondary" />
-                    <span className="text-xs font-medium text-secondary">UCSD Verified</span>
-                  </div>
-                </div>
+          {/* Header */}
+          <div className="ucsd-gradient p-8 pb-12 rounded-t-lg">
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground text-3xl font-bold shadow-lg">
+                {(user.preferredName || user.name).charAt(0)}
               </div>
-
-              <div className="flex items-center gap-2 mt-4">
-                <Star className="w-4 h-4 text-secondary fill-secondary" />
-                <span className="text-sm font-semibold text-primary-foreground">{user.rating}</span>
-                <span className="text-xs text-primary-foreground/60">rating</span>
+              <div>
+                <h2 className="text-2xl font-display font-bold text-primary-foreground">
+                  {user.preferredName || user.name}
+                </h2>
+                <p className="text-sm text-primary-foreground/70">{user.name}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Shield className="w-3.5 h-3.5 text-secondary" />
+                  <span className="text-xs font-medium text-secondary">UCSD Verified</span>
+                </div>
               </div>
             </div>
+            <div className="flex items-center gap-2 mt-4">
+              <Star className="w-4 h-4 text-secondary fill-secondary" />
+              <span className="text-sm font-semibold text-primary-foreground">{user.rating}</span>
+              <span className="text-xs text-primary-foreground/60">rating</span>
+            </div>
+          </div>
 
-            {/* Compatibility card */}
-            {compatibility && (
-              <div className="mx-6 -mt-6 p-4 bg-card rounded-xl border border-border shadow-lg relative z-10">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="text-2xl font-display font-bold text-primary">{compatibility.score}%</div>
-                  <span className="text-sm font-medium text-muted-foreground">match</span>
-                </div>
+          {/* Compatibility card */}
+          {compatibility && (
+            <div className="mx-6 -mt-6 p-4 bg-card rounded-xl border border-border shadow-lg relative z-10">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="text-2xl font-display font-bold text-primary">{compatibility.score}%</div>
+                <span className="text-sm font-medium text-muted-foreground">match</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-1.5">Why this score?</p>
+              <div className="flex flex-wrap gap-1.5">
+                {compatibility.reasons.map((reason, i) => (
+                  <span key={i} className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                    {reason}
+                  </span>
+                ))}
+                {compatibility.reasons.length === 0 && (
+                  <span className="text-xs text-muted-foreground">No shared traits yet</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Body */}
+          {editing ? (
+            <EditProfileForm user={user} onDone={() => setEditing(false)} />
+          ) : (
+            <div className="p-6 space-y-5">
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">About</p>
+                <p className="text-sm text-foreground">
+                  {user.year} year {user.major} student at {user.college} College.
+                  {user.interests.length > 0 && ` Into ${user.interests.slice(0, 3).join(', ')}.`}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <InfoRow icon={<GraduationCap className="w-4 h-4 text-primary/60" />} label="College" value={user.college} />
+                <InfoRow icon={<Calendar className="w-4 h-4 text-primary/60" />} label="Year" value={user.year} />
+                <InfoRow icon={<GraduationCap className="w-4 h-4 text-primary/60" />} label="Major" value={user.major} />
+                {user.ageRange && <InfoRow label="Age" value={user.ageRange} />}
+                {user.musicTag && <InfoRow icon={<Music className="w-4 h-4 text-primary/60" />} label="Music Vibe" value={user.musicTag} />}
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Interests</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {compatibility.reasons.map((reason, i) => (
-                    <span key={i} className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
-                      {reason}
-                    </span>
+                  {user.interests.map((tag) => (
+                    <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">{tag}</span>
                   ))}
-                  {compatibility.reasons.length === 0 && (
-                    <span className="text-xs text-muted-foreground">No shared traits yet</span>
-                  )}
+                  {user.interests.length === 0 && <span className="text-xs text-muted-foreground">None added yet</span>}
                 </div>
               </div>
-            )}
 
-            {/* Body */}
-            {editing ? (
-              <EditProfileForm user={user} onDone={() => setEditing(false)} />
-            ) : (
-              <div className="p-6 space-y-5">
-                {/* About */}
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">About</p>
-                  <p className="text-sm text-foreground">
-                    {user.year} year {user.major} student at {user.college} College.
-                    {user.interests.length > 0 && ` Into ${user.interests.slice(0, 3).join(', ')}.`}
-                  </p>
-                </div>
-
-                {/* Info grid */}
-                <div className="grid grid-cols-2 gap-4">
-                  <InfoRow icon={<GraduationCap className="w-4 h-4 text-primary/60" />} label="College" value={user.college} />
-                  <InfoRow icon={<Calendar className="w-4 h-4 text-primary/60" />} label="Year" value={user.year} />
-                  <InfoRow icon={<GraduationCap className="w-4 h-4 text-primary/60" />} label="Major" value={user.major} />
-                  {user.ageRange && <InfoRow label="Age" value={user.ageRange} />}
-                  {user.musicTag && <InfoRow icon={<Music className="w-4 h-4 text-primary/60" />} label="Music Vibe" value={user.musicTag} />}
-                </div>
-
-                {/* Interests */}
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Interests</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {user.interests.map((tag) => (
-                      <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">{tag}</span>
-                    ))}
-                    {user.interests.length === 0 && <span className="text-xs text-muted-foreground">None added yet</span>}
-                  </div>
-                </div>
-
-                {/* Clubs */}
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Clubs</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(user.clubs || []).map((club) => (
-                      <span key={club} className="text-xs px-2.5 py-1 rounded-full bg-accent text-accent-foreground">{club}</span>
-                    ))}
-                    {(!user.clubs || user.clubs.length === 0) && <span className="text-xs text-muted-foreground">None added yet</span>}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-2">
-                  {isOwnProfile && (
-                    <button
-                      onClick={() => setEditing(true)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                    >
-                      <Pencil className="w-4 h-4" /> Edit Profile
-                    </button>
-                  )}
-                  {!isOwnProfile && (
-                    <button
-                      onClick={() => setShowMessage(true)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:brightness-110 transition-all"
-                    >
-                      <MessageCircle className="w-4 h-4" /> Message
-                    </button>
-                  )}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Clubs</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(user.clubs || []).map((club) => (
+                    <span key={club} className="text-xs px-2.5 py-1 rounded-full bg-accent text-accent-foreground">{club}</span>
+                  ))}
+                  {(!user.clubs || user.clubs.length === 0) && <span className="text-xs text-muted-foreground">None added yet</span>}
                 </div>
               </div>
-            )}
-          </motion.div>
 
-          {/* Message Modal */}
-          <AnimatePresence>
-            {showMessage && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[110] flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4"
-                onClick={() => setShowMessage(false)}
-              >
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-xl border border-border"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h3 className="font-display text-lg font-bold text-foreground mb-2">Message {user.preferredName || user.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Choose a platform to reach out:</p>
-                  <div className="flex flex-col gap-2">
-                    {['iMessage', 'Instagram DM', 'Discord'].map((platform) => (
-                      <button
-                        key={platform}
-                        onClick={() => { toast.info(`${platform} (demo only)`); setShowMessage(false); }}
-                        className="w-full py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                      >
-                        {platform}
-                      </button>
-                    ))}
-                  </div>
-                  <button onClick={() => setShowMessage(false)} className="w-full mt-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    Close
+              <div className="flex gap-2 pt-2">
+                {isOwnProfile && (
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" /> Edit Profile
                   </button>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      )}
-    </AnimatePresence>
+                )}
+                {!isOwnProfile && (
+                  <button
+                    onClick={() => setShowMessage(true)}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:brightness-110 transition-all"
+                  >
+                    <MessageCircle className="w-4 h-4" /> Message
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Message Modal */}
+      <Dialog open={showMessage} onOpenChange={(v) => { if (!v) setShowMessage(false); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Message {user.preferredName || user.name}</DialogTitle>
+            <DialogDescription>Choose a platform to reach out:</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            {['iMessage', 'Instagram DM', 'Discord'].map((platform) => (
+              <button
+                key={platform}
+                onClick={() => { toast.info(`${platform} (demo only)`); setShowMessage(false); }}
+                className="w-full py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                {platform}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
@@ -242,9 +193,7 @@ const EditProfileForm = ({ user, onDone }: { user: User; onDone: () => void }) =
 
   const addTag = (list: string[], setList: (v: string[]) => void, val: string, setVal: (v: string) => void) => {
     const trimmed = val.trim();
-    if (trimmed && !list.includes(trimmed)) {
-      setList([...list, trimmed]);
-    }
+    if (trimmed && !list.includes(trimmed)) setList([...list, trimmed]);
     setVal('');
   };
 

@@ -2,8 +2,8 @@ import { User } from '@/types';
 import { useStore } from '@/store/useStore';
 import { computeCompatibility } from '@/lib/utils-drive';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, Shield, MessageCircle, Pencil } from 'lucide-react';
-import { useState } from 'react';
+import { X, Star, Shield, MessageCircle, Pencil, Music, Calendar, GraduationCap } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 
@@ -13,12 +13,27 @@ interface Props {
   onClose: () => void;
 }
 
-const ProfileDrawer = ({ user, open, onClose }: Props) => {
+const ProfileOverlay = ({ user, open, onClose }: Props) => {
   const { currentUser } = useStore();
   const [editing, setEditing] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const isOwnProfile = currentUser?.id === user.id;
   const compatibility = currentUser && !isOwnProfile ? computeCompatibility(currentUser, user) : null;
+
+  const handleEsc = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (open) {
+      document.addEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = '';
+    };
+  }, [open, handleEsc]);
 
   return (
     <AnimatePresence>
@@ -27,48 +42,53 @@ const ProfileDrawer = ({ user, open, onClose }: Props) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex justify-end bg-foreground/40 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] bg-foreground/50 backdrop-blur-md flex items-center justify-center p-4"
           onClick={onClose}
         >
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="w-full max-w-md bg-card border-l border-border h-full overflow-y-auto shadow-2xl"
+            initial={{ scale: 0.92, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.92, opacity: 0 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+            className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-2xl shadow-2xl border border-border"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="ucsd-gradient p-6 relative">
-              <button onClick={onClose} className="absolute top-4 right-4 p-1.5 rounded-full bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
+            {/* Header */}
+            <div className="ucsd-gradient p-8 pb-12 rounded-t-2xl">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground text-2xl font-bold">
+                <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground text-3xl font-bold shadow-lg">
                   {(user.preferredName || user.name).charAt(0)}
                 </div>
                 <div>
-                  <h2 className="text-xl font-display font-bold text-primary-foreground">
+                  <h2 className="text-2xl font-display font-bold text-primary-foreground">
                     {user.preferredName || user.name}
                   </h2>
-                  <div className="flex items-center gap-2 mt-1">
+                  <p className="text-sm text-primary-foreground/70">{user.name}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
                     <Shield className="w-3.5 h-3.5 text-secondary" />
                     <span className="text-xs font-medium text-secondary">UCSD Verified</span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-2 mt-4">
                 <Star className="w-4 h-4 text-secondary fill-secondary" />
                 <span className="text-sm font-semibold text-primary-foreground">{user.rating}</span>
                 <span className="text-xs text-primary-foreground/60">rating</span>
               </div>
             </div>
 
-            {/* Compatibility */}
+            {/* Compatibility card */}
             {compatibility && (
-              <div className="mx-6 -mt-4 p-4 bg-card rounded-xl border border-border shadow-lg">
+              <div className="mx-6 -mt-6 p-4 bg-card rounded-xl border border-border shadow-lg relative z-10">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="text-2xl font-display font-bold text-primary">{compatibility.score}%</div>
                   <span className="text-sm font-medium text-muted-foreground">match</span>
@@ -86,36 +106,50 @@ const ProfileDrawer = ({ user, open, onClose }: Props) => {
               </div>
             )}
 
-            {/* Details */}
+            {/* Body */}
             {editing ? (
               <EditProfileForm user={user} onDone={() => setEditing(false)} />
             ) : (
               <div className="p-6 space-y-5">
-                <InfoRow label="College" value={user.college} />
-                <InfoRow label="Year" value={user.year} />
-                <InfoRow label="Major" value={user.major} />
+                {/* About */}
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">About</p>
+                  <p className="text-sm text-foreground">
+                    {user.year} year {user.major} student at {user.college} College.
+                    {user.interests.length > 0 && ` Into ${user.interests.slice(0, 3).join(', ')}.`}
+                  </p>
+                </div>
 
+                {/* Info grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  <InfoRow icon={<GraduationCap className="w-4 h-4 text-primary/60" />} label="College" value={user.college} />
+                  <InfoRow icon={<Calendar className="w-4 h-4 text-primary/60" />} label="Year" value={user.year} />
+                  <InfoRow icon={<GraduationCap className="w-4 h-4 text-primary/60" />} label="Major" value={user.major} />
+                  {user.ageRange && <InfoRow label="Age" value={user.ageRange} />}
+                  {user.musicTag && <InfoRow icon={<Music className="w-4 h-4 text-primary/60" />} label="Music Vibe" value={user.musicTag} />}
+                </div>
+
+                {/* Interests */}
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Interests</p>
                   <div className="flex flex-wrap gap-1.5">
                     {user.interests.map((tag) => (
                       <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">{tag}</span>
                     ))}
-                    {user.interests.length === 0 && <span className="text-xs text-muted-foreground">None</span>}
+                    {user.interests.length === 0 && <span className="text-xs text-muted-foreground">None added yet</span>}
                   </div>
                 </div>
 
+                {/* Clubs */}
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Clubs</p>
                   <div className="flex flex-wrap gap-1.5">
                     {(user.clubs || []).map((club) => (
                       <span key={club} className="text-xs px-2.5 py-1 rounded-full bg-accent text-accent-foreground">{club}</span>
                     ))}
-                    {(!user.clubs || user.clubs.length === 0) && <span className="text-xs text-muted-foreground">None</span>}
+                    {(!user.clubs || user.clubs.length === 0) && <span className="text-xs text-muted-foreground">None added yet</span>}
                   </div>
                 </div>
-
-                {user.musicTag && <InfoRow label="Music Vibe" value={user.musicTag} />}
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
@@ -147,7 +181,7 @@ const ProfileDrawer = ({ user, open, onClose }: Props) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4"
+                className="fixed inset-0 z-[110] flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4"
                 onClick={() => setShowMessage(false)}
               >
                 <motion.div
@@ -183,10 +217,13 @@ const ProfileDrawer = ({ user, open, onClose }: Props) => {
   );
 };
 
-const InfoRow = ({ label, value }: { label: string; value: string }) => (
-  <div>
-    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{label}</p>
-    <p className="text-sm font-medium text-foreground capitalize">{value}</p>
+const InfoRow = ({ icon, label, value }: { icon?: React.ReactNode; label: string; value: string }) => (
+  <div className="flex items-start gap-2">
+    {icon && <div className="mt-0.5">{icon}</div>}
+    <div>
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{label}</p>
+      <p className="text-sm font-medium text-foreground capitalize">{value}</p>
+    </div>
   </div>
 );
 
@@ -225,7 +262,7 @@ const EditProfileForm = ({ user, onDone }: { user: User; onDone: () => void }) =
     <div className="p-6 space-y-4">
       <div>
         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preferred Name</label>
-        <input value={preferredName} onChange={e => setPreferredName(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground focus:ring-2 focus:ring-primary/40 outline-none" />
+        <input value={preferredName} onChange={e => setPreferredName(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground focus:ring-2 focus:ring-ring outline-none" />
       </div>
       <div>
         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">College</label>
@@ -241,10 +278,9 @@ const EditProfileForm = ({ user, onDone }: { user: User; onDone: () => void }) =
       </div>
       <div>
         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Major</label>
-        <input value={major} onChange={e => setMajor(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground focus:ring-2 focus:ring-primary/40 outline-none" />
+        <input value={major} onChange={e => setMajor(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground focus:ring-2 focus:ring-ring outline-none" />
       </div>
 
-      {/* Interests chips */}
       <div>
         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Interests</label>
         <div className="flex flex-wrap gap-1.5 mt-1 mb-2">
@@ -261,7 +297,6 @@ const EditProfileForm = ({ user, onDone }: { user: User; onDone: () => void }) =
         </div>
       </div>
 
-      {/* Clubs chips */}
       <div>
         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Clubs</label>
         <div className="flex flex-wrap gap-1.5 mt-1 mb-2">
@@ -286,4 +321,4 @@ const EditProfileForm = ({ user, onDone }: { user: User; onDone: () => void }) =
   );
 };
 
-export default ProfileDrawer;
+export default ProfileOverlay;

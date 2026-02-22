@@ -26,7 +26,7 @@ const HeroHeader = () => {
             <span className="text-secondary">favorite ride.</span>
           </h1>
           <p className="text-primary-foreground/70 text-sm md:text-base max-w-md leading-relaxed">
-            Campus rides powered by real connections. Not just a ride — a social experience.
+            UCSD rides powered by real connections. Not just a ride — a social experience.
           </p>
         </motion.div>
 

@@ -350,7 +350,7 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
         <div className="flex items-start justify-between mb-3">
           <div
             className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => setShowProfile(true)}
+            onClick={() => window.location.href = `/profile/${driver.id}`}
           >
             <div className="w-10 h-10 rounded-full triton-gradient flex items-center justify-center text-primary-foreground text-sm font-bold overflow-hidden ring-2 ring-border">
               {driver.avatar_url ? (
@@ -473,7 +473,6 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
         )}
       </AnimatePresence>
 
-      <ProfileOverlay user={driverObj} open={showProfile} onClose={() => setShowProfile(false)} />
     </>
   );
 };

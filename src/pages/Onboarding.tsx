@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Car, X, Upload, Search, Check } from 'lucide-react';
 import { UCSD_CLUBS, INTEREST_OPTIONS } from '@/lib/ucsdClubs';
+import { UCSD_MAJORS as UCSD_MAJORS_LIST } from '@/lib/ucsdMajors';
 
 const COLLEGES = ['Revelle', 'Muir', 'Marshall', 'Warren', 'Sixth', 'Seventh', 'ERC'];
 const YEARS = ['1st', '2nd', '3rd', '4th', '5th+', 'Grad'];
@@ -159,7 +160,7 @@ const Onboarding = () => {
           {step === 1 && (
             <div className="space-y-5">
               <div>
-                <h3 className="font-display text-lg font-bold text-foreground mb-1">How will you use Triton Rideshare?</h3>
+                <h3 className="font-display text-lg font-bold text-foreground mb-1">How will you use Drive UCSD?</h3>
                 <p className="text-sm text-muted-foreground">You can change this anytime</p>
               </div>
               <div className="space-y-2">
@@ -208,7 +209,7 @@ const Onboarding = () => {
 
               <SelectField label="College *" value={college} onChange={setCollege} options={COLLEGES} placeholder="Select college" />
               <SelectField label="Year *" value={year} onChange={setYear} options={YEARS} placeholder="Select year" />
-              <Field label="Major *" value={major} onChange={setMajor} placeholder="e.g. Computer Science" />
+              <SearchableField label="Major *" value={major} onChange={setMajor} options={UCSD_MAJORS_LIST} placeholder="Search UCSD majors..." />
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Age *</label>
@@ -390,14 +391,42 @@ const Onboarding = () => {
 const Field = ({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) => (
   <div>
     <label className="block text-sm font-medium text-foreground mb-1">{label}</label>
-    <input
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-    />
+    <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
   </div>
 );
+
+const SearchableField = ({ label, value, onChange, options, placeholder }: { label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder: string }) => {
+  const [search, setSearch] = useState('');
+  const [open, setOpen] = useState(false);
+  const filtered = useMemo(() => {
+    if (!search.trim()) return [];
+    return options.filter(o => o.toLowerCase().includes(search.toLowerCase())).slice(0, 8);
+  }, [search, options]);
+  return (
+    <div>
+      <label className="block text-sm font-medium text-foreground mb-1">{label}</label>
+      <div className="relative">
+        <input
+          value={value || search}
+          onChange={e => { onChange(''); setSearch(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          placeholder={placeholder}
+          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        {open && filtered.length > 0 && (
+          <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            {filtered.map(o => (
+              <button key={o} onMouseDown={() => { onChange(o); setSearch(''); setOpen(false); }}
+                className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors">{o}</button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const SelectField = ({ label, value, onChange, options, placeholder }: { label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder: string }) => (
   <div>

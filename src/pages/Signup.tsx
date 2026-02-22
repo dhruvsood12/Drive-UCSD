@@ -43,7 +43,7 @@ const Signup = () => {
           <div className="w-12 h-12 rounded-xl triton-gradient flex items-center justify-center mb-3 shadow-lg">
             <span className="text-2xl">🔱</span>
           </div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Triton Rideshare</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground">Drive UCSD</h1>
           <p className="text-sm text-muted-foreground mt-1">Campus rides, real connections</p>
         </div>
 

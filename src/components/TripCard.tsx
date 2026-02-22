@@ -1,6 +1,7 @@
 import { Trip, RideRequest } from '@/types';
 import { useStore } from '@/store/useStore';
-import { computeCompatibility, formatDepartureTime } from '@/lib/utils-drive';
+import { formatDepartureTime } from '@/lib/utils-drive';
+import { computeCompatibility, CompatibilityResult, CompatibilityProfile } from '@/lib/compatibility';
 import CompatibilityBreakdown from './CompatibilityBreakdown';
 import ProfileOverlay from './ProfileOverlay';
 import { motion, AnimatePresence } from 'framer-motion';

@@ -2,14 +2,18 @@ import Navbar from '@/components/Navbar';
 import FeedPage from '@/components/FeedPage';
 import RealMapPage from '@/components/RealMapPage';
 import DriverRequestsPage from '@/components/DriverRequestsPage';
+import EarningsPage from '@/components/EarningsPage';
+import RideHistoryPage from '@/components/RideHistoryPage';
+import SafetyPage from '@/components/SafetyPage';
 import CreateTripModal from '@/components/CreateTripModal';
 import { useState, useEffect } from 'react';
 
+type Tab = 'feed' | 'map' | 'requests' | 'earnings' | 'history' | 'safety';
+
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'feed' | 'map' | 'requests'>('feed');
+  const [activeTab, setActiveTab] = useState<Tab>('feed');
   const [role, setRole] = useState<'rider' | 'driver'>('rider');
 
-  // Sync with navbar state
   useEffect(() => {
     const interval = setInterval(() => {
       const state = (window as any).__driveState;
@@ -28,6 +32,9 @@ const Index = () => {
         {activeTab === 'feed' && <FeedPage />}
         {activeTab === 'map' && <RealMapPage />}
         {activeTab === 'requests' && <DriverRequestsPage />}
+        {activeTab === 'earnings' && <EarningsPage />}
+        {activeTab === 'history' && <RideHistoryPage />}
+        {activeTab === 'safety' && <SafetyPage />}
       </main>
       <CreateTripModal />
     </div>

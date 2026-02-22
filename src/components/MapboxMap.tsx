@@ -96,7 +96,7 @@ const MapboxMap = ({ trips: externalTrips }: Props) => {
   const [selectedTrip, setSelectedTrip] = useState<MapTrip | null>(null);
   const { profile } = useAuth();
 
-  const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || import.meta.env.VITE_MAPBOX_TOKEN;
+  const token = 'pk.eyJ1IjoiZGhydXYxNGsiLCJhIjoiY21sd3l3bmN0MG4xeDNlcHB2M2ZseXNjciJ9.6IvuBUbVJQm25b83oPIAtw';
 
   // Use external trips if available, otherwise mock
   const trips = useMemo(() => externalTrips.length > 0 ? externalTrips : MOCK_TRIPS, [externalTrips]);

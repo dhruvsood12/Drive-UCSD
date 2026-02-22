@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { DESTINATION_NAMES, TRIP_VIBES } from '@/lib/destinations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { X } from 'lucide-react';
-
-const DEST_OPTIONS = ['Pacific Beach', 'Downtown', 'Grocery', 'Airport'];
 
 const CreateTripModal = () => {
   const { profile } = useAuth();
@@ -15,6 +14,7 @@ const CreateTripModal = () => {
   const [seats, setSeats] = useState(3);
   const [rate, setRate] = useState(5);
   const [notes, setNotes] = useState('');
+  const [vibe, setVibe] = useState('custom');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -45,6 +45,7 @@ const CreateTripModal = () => {
       seats_total: seats,
       comp_rate: rate,
       notes,
+      vibe,
     } as any);
 
     if (error) {
@@ -72,7 +73,7 @@ const CreateTripModal = () => {
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-card rounded-2xl p-6 w-full max-w-md shadow-xl border border-border"
+            className="bg-card rounded-2xl p-6 w-full max-w-md shadow-xl border border-border max-h-[85vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
@@ -83,14 +84,35 @@ const CreateTripModal = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {/* Destination */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Destination</label>
                 <div className="flex flex-wrap gap-2">
-                  {DEST_OPTIONS.map(d => (
+                  {DESTINATION_NAMES.map(d => (
                     <button key={d} type="button" onClick={() => setDestination(d)} className={`chip ${destination === d ? 'chip-active' : 'chip-inactive'}`}>{d}</button>
                   ))}
                 </div>
               </div>
+
+              {/* Trip vibe */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Trip Vibe</label>
+                <div className="flex flex-wrap gap-2">
+                  {TRIP_VIBES.map(v => (
+                    <button
+                      key={v.value}
+                      type="button"
+                      onClick={() => setVibe(v.value)}
+                      className={`text-xs px-3 py-1.5 rounded-full transition-all font-medium ${
+                        vibe === v.value ? v.color + ' ring-1 ring-current' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      }`}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Departure Time</label>
                 <input type="datetime-local" value={departureTime} onChange={e => setDepartureTime(e.target.value)} className="w-full h-10 px-3 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring" required />
@@ -107,7 +129,7 @@ const CreateTripModal = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Notes</label>
-                <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Trunk space, music preferences, vibes..." rows={2} className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Trunk space, music preferences, vibes..." rows={2} className="w-full px-3 py-2 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" maxLength={200} />
               </div>
               <button type="submit" disabled={saving} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50">
                 {saving ? 'Posting...' : 'Post Trip 🚀'}

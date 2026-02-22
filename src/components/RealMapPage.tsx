@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useTrips } from '@/hooks/useTrips';
 import MapboxMap, { MapTrip } from './MapboxMap';
+import { DESTINATION_NAMES, DESTINATIONS } from '@/lib/destinations';
 
-const DESTINATIONS = ['Pacific Beach', 'Downtown', 'Grocery', 'Airport'];
 const TIME_WINDOWS = [
   { value: 'now', label: 'Now' },
   { value: '1hr', label: '< 1 hr' },
@@ -41,9 +41,14 @@ const RealMapPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4 shrink-0">
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setDestination(null)} className={`chip ${!destination ? 'chip-active' : 'chip-inactive'}`}>All</button>
-          {DESTINATIONS.map(d => (
-            <button key={d} onClick={() => setDestination(destination === d ? null : d)} className={`chip ${destination === d ? 'chip-active' : 'chip-inactive'}`}>{d}</button>
-          ))}
+          {DESTINATION_NAMES.map(d => {
+            const dest = DESTINATIONS.find(dd => dd.name === d);
+            return (
+              <button key={d} onClick={() => setDestination(destination === d ? null : d)} className={`chip ${destination === d ? 'chip-active' : 'chip-inactive'}`}>
+                {dest?.icon} {d}
+              </button>
+            );
+          })}
         </div>
         <select
           value={timeWindow || ''}
@@ -55,7 +60,7 @@ const RealMapPage = () => {
         </select>
       </div>
 
-      {/* Map fills remaining space */}
+      {/* Map */}
       <div className="flex-1 min-h-0">
         {loading ? (
           <div className="flex justify-center items-center h-full">

@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useTrips, DbTrip } from '@/hooks/useTrips';
-import { useAuth, Profile } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useMyRequests, requestSeat, getMyRequestForTrip } from '@/hooks/useRideRequests';
-import { computeCompatibility, formatDepartureTime } from '@/lib/utils-drive';
+import { computeCompatibility, profileToCompatibility } from '@/lib/compatibility';
+import { formatDepartureTime } from '@/lib/utils-drive';
 import CompatibilityBreakdown from './CompatibilityBreakdown';
 import ProfileOverlay from './ProfileOverlay';
 import MyRequestsSection from './MyRequestsSection';
 import { supabase } from '@/integrations/supabase/client';
+import { DESTINATION_NAMES, TRIP_VIBES } from '@/lib/destinations';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Clock, DollarSign, Users, Star, Check, X, Loader2, Inbox } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Users, Star, Check, X, Loader2, Inbox, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
-const DESTINATIONS = ['Pacific Beach', 'Downtown', 'Grocery', 'Airport'];
 const TIME_WINDOWS = [
   { value: 'now', label: 'Now' },
   { value: '1hr', label: '< 1 hr' },
@@ -21,11 +22,17 @@ const TIME_WINDOWS = [
 const FeedPage = () => {
   const [destination, setDestination] = useState<string | null>(null);
   const [timeWindow, setTimeWindow] = useState<string | null>(null);
+  const [vibeFilter, setVibeFilter] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<'soonest' | 'bestMatch'>('soonest');
   const [feedTab, setFeedTab] = useState<'trips' | 'myRequests'>('trips');
   const { trips, loading, refetch } = useTrips({ destination, timeWindow, sortMode });
 
   const role = (window as any).__driveState?.role || 'rider';
+
+  // Filter by vibe client-side
+  const filteredTrips = vibeFilter
+    ? trips.filter(t => (t as any).vibe === vibeFilter)
+    : trips;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -50,34 +57,45 @@ const FeedPage = () => {
         <MyRequestsSection />
       ) : (
         <>
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+          {/* Destination filters */}
+          <div className="flex flex-col gap-3 mb-4">
             <div className="flex flex-wrap gap-2">
               <button onClick={() => setDestination(null)} className={`chip ${!destination ? 'chip-active' : 'chip-inactive'}`}>All</button>
-              {DESTINATIONS.map(d => (
+              {DESTINATION_NAMES.slice(0, 7).map(d => (
                 <button key={d} onClick={() => setDestination(destination === d ? null : d)} className={`chip ${destination === d ? 'chip-active' : 'chip-inactive'}`}>{d}</button>
               ))}
             </div>
-            <select
-              value={timeWindow || ''}
-              onChange={e => setTimeWindow(e.target.value || null)}
-              className="h-9 px-3 rounded-lg border border-border bg-card text-card-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Any time</option>
-              {TIME_WINDOWS.map(tw => <option key={tw.value} value={tw.value}>{tw.label}</option>)}
-            </select>
-            <div className="flex items-center gap-1 ml-auto bg-muted rounded-lg p-1">
-              {(['soonest', 'bestMatch'] as const).map(mode => (
-                <button
-                  key={mode}
-                  onClick={() => setSortMode(mode)}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-150 ${
-                    sortMode === mode ? 'bg-card text-card-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {mode === 'soonest' ? 'Soonest' : 'Best Match'}
-                </button>
+
+            {/* Vibe filter */}
+            <div className="flex flex-wrap gap-1.5">
+              <button onClick={() => setVibeFilter(null)} className={`text-xs px-2.5 py-1 rounded-full transition-all ${!vibeFilter ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground hover:bg-secondary/20'}`}>All vibes</button>
+              {TRIP_VIBES.map(v => (
+                <button key={v.value} onClick={() => setVibeFilter(vibeFilter === v.value ? null : v.value)} className={`text-xs px-2.5 py-1 rounded-full transition-all ${vibeFilter === v.value ? v.color + ' font-semibold' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>{v.label}</button>
               ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <select
+                value={timeWindow || ''}
+                onChange={e => setTimeWindow(e.target.value || null)}
+                className="h-9 px-3 rounded-lg border border-border bg-card text-card-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Any time</option>
+                {TIME_WINDOWS.map(tw => <option key={tw.value} value={tw.value}>{tw.label}</option>)}
+              </select>
+              <div className="flex items-center gap-1 ml-auto bg-muted rounded-lg p-1">
+                {(['soonest', 'bestMatch'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => setSortMode(mode)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-150 ${
+                      sortMode === mode ? 'bg-card text-card-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {mode === 'soonest' ? 'Soonest' : 'Best Match'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -85,14 +103,14 @@ const FeedPage = () => {
             <div className="flex justify-center py-16">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : trips.length === 0 ? (
+          ) : filteredTrips.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-lg font-display font-semibold text-muted-foreground">No trips found</p>
               <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or create a trip</p>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {trips.map((trip, i) => (
+              {filteredTrips.map((trip, i) => (
                 <motion.div key={trip.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
                   <RealTripCard trip={trip} onUpdate={refetch} />
                 </motion.div>
@@ -116,14 +134,13 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
 
   const driver = trip.driver;
   const role = (window as any).__driveState?.role || 'rider';
+  const vibe = TRIP_VIBES.find(v => v.value === (trip as any).vibe);
 
-  // Check if rider already requested this trip
   useEffect(() => {
     if (!profile || role !== 'rider' || !trip.id) {
       setCheckingRequest(false);
       return;
     }
-    // Only check real DB trips (mock trips start with 'mock-')
     if (trip.id.startsWith('mock-')) {
       setCheckingRequest(false);
       return;
@@ -136,12 +153,16 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
 
   if (!driver) return null;
 
-  const currentUserObj = profile ? {
-    id: profile.id, name: profile.email, preferredName: profile.preferred_name || undefined,
-    email: profile.email, year: profile.year || '', major: profile.major || '',
-    rating: 5.0, interests: profile.interests || [], clubs: profile.clubs || [],
-    college: profile.college || '', musicTag: profile.music_tag || undefined,
-  } : null;
+  const currentUserCompat = profile ? profileToCompatibility(profile as any) : null;
+  const driverCompat = {
+    id: driver.id,
+    interests: driver.interests || [],
+    clubs: driver.clubs || [],
+    college: driver.college || '',
+    major: driver.major || '',
+    year: driver.year || '',
+    musicTag: driver.music_tag || undefined,
+  };
 
   const driverObj = {
     id: driver.id, name: driver.preferred_name || 'Driver', preferredName: driver.preferred_name || undefined,
@@ -151,7 +172,7 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
     avatarUrl: driver.avatar_url || undefined,
   };
 
-  const compatibility = currentUserObj && driver.id !== profile?.id ? computeCompatibility(currentUserObj, driverObj) : null;
+  const compatibility = currentUserCompat && driver.id !== profile?.id ? computeCompatibility(currentUserCompat, driverCompat) : null;
   const isMockTrip = trip.id.startsWith('mock-');
 
   const handleRequestSeat = async () => {
@@ -164,7 +185,6 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
     const { error } = await requestSeat(trip.id, profile.id, message);
     if (error) {
       toast.error('Failed to request seat');
-      console.error(error);
     } else {
       toast.success('Seat requested! 🎉', { description: 'The driver will review your request.' });
       setMyRequestStatus('pending');
@@ -226,7 +246,7 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
           >
             <div className="w-8 h-8 rounded-full ucsd-gradient flex items-center justify-center text-primary-foreground text-sm font-bold overflow-hidden">
               {driver.avatar_url ? (
-                <img src={driver.avatar_url} className="w-full h-full object-cover" />
+                <img src={driver.avatar_url} className="w-full h-full object-cover" alt="" />
               ) : (
                 (driver.preferred_name || 'D').charAt(0)
               )}
@@ -236,6 +256,9 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
               <p className="text-xs text-muted-foreground">{driver.year} · {driver.major}</p>
             </div>
           </div>
+          {vibe && (
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${vibe.color}`}>{vibe.label}</span>
+          )}
         </div>
 
         {/* Interest tags */}

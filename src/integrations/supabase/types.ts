@@ -14,10 +14,43 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          sender_id: string
+          trip_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          sender_id: string
+          trip_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          sender_id?: string
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number | null
           avatar_url: string | null
+          campus: string | null
           clean_car_pref: string | null
           clubs: string[] | null
           college: string | null
@@ -40,6 +73,7 @@ export type Database = {
         Insert: {
           age?: number | null
           avatar_url?: string | null
+          campus?: string | null
           clean_car_pref?: string | null
           clubs?: string[] | null
           college?: string | null
@@ -62,6 +96,7 @@ export type Database = {
         Update: {
           age?: number | null
           avatar_url?: string | null
+          campus?: string | null
           clean_car_pref?: string | null
           clubs?: string[] | null
           college?: string | null
@@ -82,6 +117,85 @@ export type Database = {
           year?: string | null
         }
         Relationships: []
+      }
+      ratings: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string
+          rated_id: string
+          rater_id: string
+          score: number
+          trip_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rated_id: string
+          rater_id: string
+          score: number
+          trip_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rated_id?: string
+          rater_id?: string
+          score?: number
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratings_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          created_at: string | null
+          details: string | null
+          id: string
+          reason: string
+          reported_id: string
+          reporter_id: string
+          status: string | null
+          trip_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          reason: string
+          reported_id: string
+          reporter_id: string
+          status?: string | null
+          trip_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          reason?: string
+          reported_id?: string
+          reporter_id?: string
+          status?: string | null
+          trip_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ride_requests: {
         Row: {
@@ -125,6 +239,38 @@ export type Database = {
           },
         ]
       }
+      trip_participants: {
+        Row: {
+          id: string
+          joined_at: string | null
+          role: string
+          trip_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          role?: string
+          trip_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          role?: string
+          trip_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_participants_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trips: {
         Row: {
           comp_rate: number | null
@@ -138,6 +284,7 @@ export type Database = {
           seats_available: number
           seats_total: number
           to_location: string
+          vibe: string | null
         }
         Insert: {
           comp_rate?: number | null
@@ -151,6 +298,7 @@ export type Database = {
           seats_available?: number
           seats_total?: number
           to_location: string
+          vibe?: string | null
         }
         Update: {
           comp_rate?: number | null
@@ -164,6 +312,7 @@ export type Database = {
           seats_available?: number
           seats_total?: number
           to_location?: string
+          vibe?: string | null
         }
         Relationships: [
           {

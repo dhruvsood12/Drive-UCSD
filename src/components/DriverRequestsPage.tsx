@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useDriverRequests, acceptRequest, denyRequest, RideRequestRow } from '@/hooks/useRideRequests';
 import { useAuth } from '@/contexts/AuthContext';
-import { computeCompatibility, formatDepartureTime } from '@/lib/utils-drive';
+import { computeCompatibility, profileToCompatibility } from '@/lib/compatibility';
+import { formatDepartureTime } from '@/lib/utils-drive';
 import CompatibilityBreakdown from './CompatibilityBreakdown';
 import ProfileOverlay from './ProfileOverlay';
 import { User } from '@/types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { MapPin, Clock, Users, Check, X, Loader2, UserCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const DriverRequestsPage = () => {
   const { requests, loading, refetch } = useDriverRequests();
@@ -75,12 +77,16 @@ const RequestCard = ({ request, onAction, readonly }: { request: RideRequestRow;
   const trip = request.trip;
   if (!rider || !trip) return null;
 
-  const currentUserObj = profile ? {
-    id: profile.id, name: profile.email, preferredName: profile.preferred_name || undefined,
-    email: profile.email, year: profile.year || '', major: profile.major || '',
-    rating: 5.0, interests: profile.interests || [], clubs: profile.clubs || [],
-    college: profile.college || '', musicTag: profile.music_tag || undefined,
-  } : null;
+  const currentUserCompat = profile ? profileToCompatibility(profile as any) : null;
+  const riderCompat = {
+    id: rider.id,
+    interests: rider.interests || [],
+    clubs: rider.clubs || [],
+    college: rider.college || '',
+    major: rider.major || '',
+    year: rider.year || '',
+    musicTag: rider.music_tag || undefined,
+  };
 
   const riderObj: User = {
     id: rider.id, name: rider.preferred_name || 'Rider', preferredName: rider.preferred_name || undefined,
@@ -90,7 +96,7 @@ const RequestCard = ({ request, onAction, readonly }: { request: RideRequestRow;
     avatarUrl: rider.avatar_url || undefined,
   };
 
-  const compatibility = currentUserObj ? computeCompatibility(currentUserObj, riderObj) : null;
+  const compatibility = currentUserCompat ? computeCompatibility(currentUserCompat, riderCompat) : null;
 
   const handleAccept = async () => {
     setActing('accept');
@@ -98,6 +104,12 @@ const RequestCard = ({ request, onAction, readonly }: { request: RideRequestRow;
     if (error) {
       toast.error('Failed to accept request');
     } else {
+      // Add to trip_participants
+      await supabase.from('trip_participants').insert({
+        trip_id: trip.id,
+        user_id: rider.id,
+        role: 'rider',
+      } as any);
       toast.success('Accepted — they\'re in! 🎉');
       onAction();
     }
@@ -119,7 +131,6 @@ const RequestCard = ({ request, onAction, readonly }: { request: RideRequestRow;
   return (
     <>
       <div className="bg-card rounded-xl border border-border p-5">
-        {/* Rider info */}
         <div className="flex items-start justify-between mb-3">
           <div
             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
@@ -148,7 +159,6 @@ const RequestCard = ({ request, onAction, readonly }: { request: RideRequestRow;
           )}
         </div>
 
-        {/* Interest tags */}
         {rider.interests && rider.interests.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {rider.interests.slice(0, 4).map(tag => (
@@ -157,7 +167,6 @@ const RequestCard = ({ request, onAction, readonly }: { request: RideRequestRow;
           </div>
         )}
 
-        {/* Clubs */}
         {rider.clubs && rider.clubs.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {rider.clubs.slice(0, 3).map(club => (
@@ -166,19 +175,16 @@ const RequestCard = ({ request, onAction, readonly }: { request: RideRequestRow;
           </div>
         )}
 
-        {/* Compatibility */}
         {compatibility && (
           <div className="mb-3">
-            <CompatibilityBreakdown result={compatibility} />
+            <CompatibilityBreakdown result={compatibility} showBreakdown />
           </div>
         )}
 
-        {/* Message */}
         {request.message && (
           <p className="text-xs text-muted-foreground italic mb-3">"{request.message}"</p>
         )}
 
-        {/* Trip context */}
         <div className="flex items-center gap-4 p-2.5 rounded-lg bg-muted/50 mb-3">
           <div className="flex items-center gap-1.5 text-xs">
             <MapPin className="w-3.5 h-3.5 text-primary/60" />
@@ -194,7 +200,6 @@ const RequestCard = ({ request, onAction, readonly }: { request: RideRequestRow;
           </div>
         </div>
 
-        {/* Actions */}
         {!readonly && (
           <div className="flex gap-2">
             <button

@@ -1,8 +1,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { DollarSign, TrendingUp, Car, Star, Sparkles, MapPin } from 'lucide-react';
+import { DollarSign, TrendingUp, Car, Star, Sparkles, MapPin, BarChart3 } from 'lucide-react';
+import DriverTierBadge from './DriverTierBadge';
 
 interface TripEarning {
   id: string;
@@ -33,21 +34,42 @@ const EarningsPage = () => {
   }, [profile?.id]);
 
   const now = new Date();
+  const pastTrips = trips.filter(t => new Date(t.departure_time) < now);
+
   const weekAgo = new Date(now.getTime() - 7 * 86400000);
   const monthAgo = new Date(now.getTime() - 30 * 86400000);
-
-  const pastTrips = trips.filter(t => new Date(t.departure_time) < now);
   const weekTrips = pastTrips.filter(t => new Date(t.departure_time) > weekAgo);
   const monthTrips = pastTrips.filter(t => new Date(t.departure_time) > monthAgo);
 
-  const totalEarnings = pastTrips.reduce((s, t) => s + (t.comp_rate * (t.seats_total - t.seats_available)), 0);
-  const weekEarnings = weekTrips.reduce((s, t) => s + (t.comp_rate * (t.seats_total - t.seats_available)), 0);
-  const monthEarnings = monthTrips.reduce((s, t) => s + (t.comp_rate * (t.seats_total - t.seats_available)), 0);
+  const earning = (t: TripEarning) => t.comp_rate * (t.seats_total - t.seats_available);
+  const totalEarnings = pastTrips.reduce((s, t) => s + earning(t), 0);
+  const weekEarnings = weekTrips.reduce((s, t) => s + earning(t), 0);
+  const monthEarnings = monthTrips.reduce((s, t) => s + earning(t), 0);
   const totalRides = pastTrips.length;
+  const completionRate = trips.length > 0 ? Math.round((pastTrips.length / trips.length) * 100) : 0;
 
-  // Demo values for display
-  const avgRating = 4.8;
-  const avgCompat = 72;
+  // Weekly chart data (last 7 days)
+  const weeklyData = useMemo(() => {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 86400000);
+      const dayStr = d.toLocaleDateString(undefined, { weekday: 'short' });
+      const dayTrips = pastTrips.filter(t => {
+        const td = new Date(t.departure_time);
+        return td.toDateString() === d.toDateString();
+      });
+      const amount = dayTrips.reduce((s, t) => s + earning(t), 0);
+      days.push({ day: dayStr, amount });
+    }
+    return days;
+  }, [pastTrips]);
+
+  const maxAmount = Math.max(...weeklyData.map(d => d.amount), 1);
+
+  // Top destination
+  const destMap = new Map<string, number>();
+  pastTrips.forEach(t => destMap.set(t.to_location, (destMap.get(t.to_location) || 0) + 1));
+  const topDest = [...destMap.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
 
   if (loading) {
     return (
@@ -59,8 +81,13 @@ const EarningsPage = () => {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="font-display text-xl font-bold text-foreground mb-1">Driver Earnings</h2>
-      <p className="text-sm text-muted-foreground mb-6">Track your rides and earnings</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="font-display text-xl font-bold text-foreground mb-1">Driver Dashboard</h2>
+          <p className="text-sm text-muted-foreground">Track your rides, earnings, and growth</p>
+        </div>
+        <DriverTierBadge rideCount={totalRides} />
+      </div>
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
@@ -68,8 +95,51 @@ const EarningsPage = () => {
         <StatCard icon={<TrendingUp className="w-5 h-5" />} label="This Month" value={`$${monthEarnings}`} color="text-primary" />
         <StatCard icon={<DollarSign className="w-5 h-5" />} label="All Time" value={`$${totalEarnings}`} color="text-secondary" />
         <StatCard icon={<Car className="w-5 h-5" />} label="Total Rides" value={String(totalRides)} color="text-foreground" />
-        <StatCard icon={<Star className="w-5 h-5" />} label="Avg Rating" value={String(avgRating)} color="text-warning" />
-        <StatCard icon={<Sparkles className="w-5 h-5" />} label="Avg Compatibility" value={`${avgCompat}%`} color="text-info" />
+        <StatCard icon={<Star className="w-5 h-5" />} label="Completion" value={`${completionRate}%`} color="text-warning" />
+        <StatCard icon={<MapPin className="w-5 h-5" />} label="Top Destination" value={topDest} color="text-info" small />
+      </div>
+
+      {/* Weekly earnings chart */}
+      <div className="bg-card rounded-xl border border-border p-5 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <BarChart3 className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Weekly Earnings</h3>
+        </div>
+        <div className="flex items-end gap-2 h-24">
+          {weeklyData.map((d, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <motion.div
+                initial={{ height: 0 }}
+                animate={{ height: `${(d.amount / maxAmount) * 100}%` }}
+                transition={{ delay: i * 0.05, duration: 0.4 }}
+                className="w-full bg-primary/20 rounded-t-md relative min-h-[4px]"
+              >
+                <div
+                  className="absolute bottom-0 w-full bg-primary rounded-t-md transition-all"
+                  style={{ height: `${d.amount > 0 ? 100 : 0}%` }}
+                />
+              </motion.div>
+              <span className="text-[10px] text-muted-foreground">{d.day}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Growth tips */}
+      <div className="bg-card rounded-xl border border-border p-5 mb-6">
+        <h3 className="text-sm font-semibold text-foreground mb-3">💡 Growth Tips</h3>
+        <div className="space-y-2">
+          {[
+            'Post trips during peak hours (7-9am, 4-7pm) for more riders',
+            'Complete your profile to boost compatibility scores',
+            'Drive to popular destinations like Pacific Beach for more requests',
+            'Maintain a high rating by being punctual and friendly',
+          ].map((tip, i) => (
+            <p key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+              <span className="text-primary font-bold mt-0.5">•</span> {tip}
+            </p>
+          ))}
+        </div>
       </div>
 
       {/* Fare calculator */}
@@ -97,7 +167,7 @@ const EarningsPage = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold text-success">+${trip.comp_rate * (trip.seats_total - trip.seats_available)}</p>
+                <p className="text-sm font-semibold text-success">+${earning(trip)}</p>
                 <p className="text-xs text-muted-foreground">{trip.seats_total - trip.seats_available} riders</p>
               </div>
             </motion.div>
@@ -108,14 +178,14 @@ const EarningsPage = () => {
   );
 };
 
-const StatCard = ({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) => (
+const StatCard = ({ icon, label, value, color, small }: { icon: React.ReactNode; label: string; value: string; color: string; small?: boolean }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
     className="bg-card rounded-xl border border-border p-4"
   >
     <div className={`mb-2 ${color}`}>{icon}</div>
-    <p className={`text-xl font-display font-bold ${color}`}>{value}</p>
+    <p className={`${small ? 'text-sm' : 'text-xl'} font-display font-bold ${color} truncate`}>{value}</p>
     <p className="text-xs text-muted-foreground">{label}</p>
   </motion.div>
 );
@@ -128,7 +198,7 @@ const FareCalculator = () => {
 
   return (
     <div className="bg-card rounded-xl border border-border p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-3">💡 Suggested Fare Calculator</h3>
+      <h3 className="text-sm font-semibold text-foreground mb-3">💰 Suggested Fare Calculator</h3>
       <div className="flex items-center gap-4">
         <div className="flex-1">
           <label className="text-xs text-muted-foreground block mb-1">Distance (miles)</label>

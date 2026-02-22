@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
-import { Car } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Signup = () => {
   const { session, profile, signUp } = useAuth();
@@ -34,12 +34,17 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-sm">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-lg ucsd-gradient flex items-center justify-center">
-            <Car className="w-6 h-6 text-primary-foreground" />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-sm"
+      >
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 rounded-xl triton-gradient flex items-center justify-center mb-3 shadow-lg">
+            <span className="text-2xl">🔱</span>
           </div>
-          <span className="font-display text-2xl font-bold text-foreground">DRIVE UCSD</span>
+          <h1 className="font-display text-2xl font-bold text-foreground">Triton Rideshare</h1>
+          <p className="text-sm text-muted-foreground mt-1">Campus rides, real connections</p>
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-6 shadow-lg">
@@ -86,7 +91,7 @@ const Signup = () => {
             <Link to="/login" className="text-primary font-semibold hover:underline">Log in</Link>
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

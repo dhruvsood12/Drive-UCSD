@@ -1,11 +1,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useDriverRequests } from '@/hooks/useRideRequests';
-import EarningsPage from './EarningsPage';
-import RideHistoryPage from './RideHistoryPage';
-import SafetyPage from './SafetyPage';
-import { Car, Plus, LogOut, Shield, History, DollarSign, ChevronDown } from 'lucide-react';
-import { motion } from 'framer-motion';
+import ThemeToggle from './ThemeToggle';
 import ProfileOverlay from './ProfileOverlay';
+import { Plus, LogOut, Shield, History, DollarSign, ChevronDown } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CAMPUSES } from '@/lib/destinations';
@@ -26,7 +24,6 @@ const Navbar = () => {
   const { requests } = useDriverRequests();
   const pendingCount = requests.filter(r => r.status === 'pending').length;
 
-  // Expose tab/role state via window for child components
   (window as any).__driveState = { activeTab, setActiveTab, role, setRole };
 
   const handleSignOut = async () => {
@@ -34,7 +31,7 @@ const Navbar = () => {
     navigate('/login');
   };
 
-  const primaryTabs: { key: Tab; label: string; driverOnly?: boolean }[] = [
+  const primaryTabs: { key: Tab; label: string }[] = [
     { key: 'feed', label: 'Feed' },
     { key: 'map', label: 'Map' },
     ...(role === 'driver' ? [{ key: 'requests' as Tab, label: 'Requests' }] : []),
@@ -47,15 +44,15 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 ucsd-gradient border-b border-primary/20 backdrop-blur-sm">
+    <nav className="sticky top-0 z-50 triton-gradient border-b border-primary/20">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Logo + campus */}
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center">
-            <Car className="w-5 h-5 text-secondary-foreground" />
+        {/* Logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shadow-sm">
+            <span className="text-lg">🔱</span>
           </div>
           <div>
-            <span className="font-display text-lg font-bold text-primary-foreground tracking-tight">
+            <span className="font-display text-lg font-extrabold text-primary-foreground tracking-tight">
               TRITON RIDESHARE
             </span>
             <select
@@ -73,7 +70,7 @@ const Navbar = () => {
         </div>
 
         {/* Primary tabs */}
-        <div className="flex items-center bg-primary-foreground/10 rounded-full p-1">
+        <div className="hidden sm:flex items-center bg-primary-foreground/10 rounded-full p-1">
           {primaryTabs.map((tab) => (
             <button
               key={tab.key}
@@ -86,13 +83,12 @@ const Navbar = () => {
             >
               {tab.label}
               {tab.key === 'requests' && pendingCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-secondary text-secondary-foreground text-xs font-bold flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-secondary text-secondary-foreground text-xs font-bold flex items-center justify-center animate-pulse">
                   {pendingCount}
                 </span>
               )}
             </button>
           ))}
-          {/* More dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowMore(!showMore)}
@@ -122,14 +118,31 @@ const Navbar = () => {
           </div>
         </div>
 
+        {/* Mobile tabs */}
+        <div className="flex sm:hidden items-center gap-1">
+          {primaryTabs.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                activeTab === tab.key
+                  ? 'bg-primary-foreground text-primary'
+                  : 'text-primary-foreground/70'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {/* Right side */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center bg-primary-foreground/10 rounded-full p-1">
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center bg-primary-foreground/10 rounded-full p-1">
             {(['rider', 'driver'] as const).map((r) => (
               <button
                 key={r}
                 onClick={() => { setRole(r); if (r === 'rider' && (activeTab === 'requests' || activeTab === 'earnings')) setActiveTab('feed'); }}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 capitalize ${
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 capitalize ${
                   role === r
                     ? 'bg-secondary text-secondary-foreground'
                     : 'text-primary-foreground/70 hover:text-primary-foreground'
@@ -144,18 +157,21 @@ const Navbar = () => {
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 25 }}>
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('open-create-trip'))}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-secondary text-secondary-foreground text-sm font-semibold hover:brightness-110 transition-all duration-150"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground text-xs font-semibold hover:brightness-110 transition-all"
               >
-                <Plus className="w-4 h-4" />
-                Create Trip
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Create Trip</span>
+                <span className="sm:hidden">+</span>
               </button>
             </motion.div>
           )}
 
+          <ThemeToggle />
+
           {profile && (
             <button
               onClick={() => setShowProfile(true)}
-              className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground text-sm font-bold hover:brightness-110 transition-all overflow-hidden"
+              className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground text-sm font-bold hover:brightness-110 transition-all overflow-hidden ring-2 ring-primary-foreground/20"
               title="My Profile"
             >
               {profile.avatar_url ? (

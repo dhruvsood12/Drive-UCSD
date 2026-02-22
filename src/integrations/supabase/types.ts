@@ -72,6 +72,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          message: string | null
           rider_id: string
           status: string | null
           trip_id: string
@@ -79,6 +80,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          message?: string | null
           rider_id: string
           status?: string | null
           trip_id: string
@@ -86,6 +88,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          message?: string | null
           rider_id?: string
           status?: string | null
           trip_id?: string

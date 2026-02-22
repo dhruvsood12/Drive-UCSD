@@ -1,11 +1,12 @@
 import Navbar from '@/components/Navbar';
 import FeedPage from '@/components/FeedPage';
 import RealMapPage from '@/components/RealMapPage';
+import DriverRequestsPage from '@/components/DriverRequestsPage';
 import CreateTripModal from '@/components/CreateTripModal';
 import { useState, useEffect } from 'react';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'feed' | 'map'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'map' | 'requests'>('feed');
   const [role, setRole] = useState<'rider' | 'driver'>('rider');
 
   // Sync with navbar state
@@ -24,7 +25,9 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="px-4 py-6 max-w-6xl mx-auto">
-        {activeTab === 'feed' ? <FeedPage /> : <RealMapPage />}
+        {activeTab === 'feed' && <FeedPage />}
+        {activeTab === 'map' && <RealMapPage />}
+        {activeTab === 'requests' && <DriverRequestsPage />}
       </main>
       <CreateTripModal />
     </div>

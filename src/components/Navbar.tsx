@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { Car, Plus, LogOut } from 'lucide-react';
+import { useDriverRequests } from '@/hooks/useRideRequests';
+import { Car, Plus, LogOut, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ProfileOverlay from './ProfileOverlay';
 import { useState } from 'react';
@@ -7,12 +8,16 @@ import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const { profile, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'feed' | 'map'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'map' | 'requests'>('feed');
   const [role, setRole] = useState<'rider' | 'driver'>(
     profile?.role === 'driver' ? 'driver' : 'rider'
   );
   const [showProfile, setShowProfile] = useState(false);
   const navigate = useNavigate();
+
+  // Get pending request count for driver badge
+  const { requests } = useDriverRequests();
+  const pendingCount = requests.filter(r => r.status === 'pending').length;
 
   // Expose tab/role state via window for child components
   (window as any).__driveState = { activeTab, setActiveTab, role, setRole };
@@ -21,6 +26,11 @@ const Navbar = () => {
     await signOut();
     navigate('/login');
   };
+
+  const tabs: { key: 'feed' | 'map' | 'requests'; label: string }[] =
+    role === 'driver'
+      ? [{ key: 'feed', label: 'Feed' }, { key: 'map', label: 'Map' }, { key: 'requests', label: 'Requests' }]
+      : [{ key: 'feed', label: 'Feed' }, { key: 'map', label: 'Map' }];
 
   return (
     <nav className="sticky top-0 z-50 ucsd-gradient border-b border-primary/20 backdrop-blur-sm">
@@ -35,17 +45,22 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center bg-primary-foreground/10 rounded-full p-1">
-          {(['feed', 'map'] as const).map((tab) => (
+          {tabs.map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`relative px-5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 capitalize ${
-                activeTab === tab
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`relative px-5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                activeTab === tab.key
                   ? 'bg-primary-foreground text-primary'
                   : 'text-primary-foreground/70 hover:text-primary-foreground'
               }`}
             >
-              {tab === 'feed' ? 'Feed' : 'Map'}
+              {tab.label}
+              {tab.key === 'requests' && pendingCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-secondary text-secondary-foreground text-xs font-bold flex items-center justify-center">
+                  {pendingCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -55,7 +70,7 @@ const Navbar = () => {
             {(['rider', 'driver'] as const).map((r) => (
               <button
                 key={r}
-                onClick={() => setRole(r)}
+                onClick={() => { setRole(r); if (r === 'rider' && activeTab === 'requests') setActiveTab('feed'); }}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 capitalize ${
                   role === r
                     ? 'bg-secondary text-secondary-foreground'

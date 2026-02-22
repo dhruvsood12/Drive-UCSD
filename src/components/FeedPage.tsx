@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTrips, DbTrip } from '@/hooks/useTrips';
 import { useAuth, Profile } from '@/contexts/AuthContext';
+import { useMyRequests, requestSeat, getMyRequestForTrip } from '@/hooks/useRideRequests';
 import { computeCompatibility, formatDepartureTime } from '@/lib/utils-drive';
 import CompatibilityBreakdown from './CompatibilityBreakdown';
 import ProfileOverlay from './ProfileOverlay';
+import MyRequestsSection from './MyRequestsSection';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Clock, DollarSign, Users, Star, Check, X, Loader2 } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Users, Star, Check, X, Loader2, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 
 const DESTINATIONS = ['Pacific Beach', 'Downtown', 'Grocery', 'Airport'];
@@ -20,58 +22,84 @@ const FeedPage = () => {
   const [destination, setDestination] = useState<string | null>(null);
   const [timeWindow, setTimeWindow] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<'soonest' | 'bestMatch'>('soonest');
+  const [feedTab, setFeedTab] = useState<'trips' | 'myRequests'>('trips');
   const { trips, loading, refetch } = useTrips({ destination, timeWindow, sortMode });
+
+  const role = (window as any).__driveState?.role || 'rider';
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => setDestination(null)} className={`chip ${!destination ? 'chip-active' : 'chip-inactive'}`}>All</button>
-          {DESTINATIONS.map(d => (
-            <button key={d} onClick={() => setDestination(destination === d ? null : d)} className={`chip ${destination === d ? 'chip-active' : 'chip-inactive'}`}>{d}</button>
-          ))}
-        </div>
-        <select
-          value={timeWindow || ''}
-          onChange={e => setTimeWindow(e.target.value || null)}
-          className="h-9 px-3 rounded-lg border border-border bg-card text-card-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="">Any time</option>
-          {TIME_WINDOWS.map(tw => <option key={tw.value} value={tw.value}>{tw.label}</option>)}
-        </select>
-        <div className="flex items-center gap-1 ml-auto bg-muted rounded-lg p-1">
-          {(['soonest', 'bestMatch'] as const).map(mode => (
+      {/* Rider sub-tabs */}
+      {role === 'rider' && (
+        <div className="flex items-center gap-1 bg-muted rounded-lg p-1 mb-5">
+          {(['trips', 'myRequests'] as const).map(tab => (
             <button
-              key={mode}
-              onClick={() => setSortMode(mode)}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-150 ${
-                sortMode === mode ? 'bg-card text-card-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              key={tab}
+              onClick={() => setFeedTab(tab)}
+              className={`flex-1 px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 ${
+                feedTab === tab ? 'bg-card text-card-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {mode === 'soonest' ? 'Soonest' : 'Best Match'}
+              {tab === 'trips' ? 'Available Trips' : 'My Requests'}
             </button>
           ))}
         </div>
-      </div>
+      )}
 
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : trips.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-lg font-display font-semibold text-muted-foreground">No trips found</p>
-          <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or create a trip</p>
-        </div>
+      {feedTab === 'myRequests' && role === 'rider' ? (
+        <MyRequestsSection />
       ) : (
-        <div className="flex flex-col gap-4">
-          {trips.map((trip, i) => (
-            <motion.div key={trip.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
-              <RealTripCard trip={trip} onUpdate={refetch} />
-            </motion.div>
-          ))}
-        </div>
+        <>
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => setDestination(null)} className={`chip ${!destination ? 'chip-active' : 'chip-inactive'}`}>All</button>
+              {DESTINATIONS.map(d => (
+                <button key={d} onClick={() => setDestination(destination === d ? null : d)} className={`chip ${destination === d ? 'chip-active' : 'chip-inactive'}`}>{d}</button>
+              ))}
+            </div>
+            <select
+              value={timeWindow || ''}
+              onChange={e => setTimeWindow(e.target.value || null)}
+              className="h-9 px-3 rounded-lg border border-border bg-card text-card-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Any time</option>
+              {TIME_WINDOWS.map(tw => <option key={tw.value} value={tw.value}>{tw.label}</option>)}
+            </select>
+            <div className="flex items-center gap-1 ml-auto bg-muted rounded-lg p-1">
+              {(['soonest', 'bestMatch'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setSortMode(mode)}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-150 ${
+                    sortMode === mode ? 'bg-card text-card-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {mode === 'soonest' ? 'Soonest' : 'Best Match'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : trips.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-lg font-display font-semibold text-muted-foreground">No trips found</p>
+              <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or create a trip</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {trips.map((trip, i) => (
+                <motion.div key={trip.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
+                  <RealTripCard trip={trip} onUpdate={refetch} />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -82,13 +110,32 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
   const [showProfile, setShowProfile] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [requesting, setRequesting] = useState(false);
+  const [message, setMessage] = useState('');
+  const [myRequestStatus, setMyRequestStatus] = useState<string | null>(null);
+  const [checkingRequest, setCheckingRequest] = useState(true);
 
   const driver = trip.driver;
-  if (!driver) return null;
-
   const role = (window as any).__driveState?.role || 'rider';
 
-  // Build user objects for compatibility
+  // Check if rider already requested this trip
+  useEffect(() => {
+    if (!profile || role !== 'rider' || !trip.id) {
+      setCheckingRequest(false);
+      return;
+    }
+    // Only check real DB trips (mock trips start with 'mock-')
+    if (trip.id.startsWith('mock-')) {
+      setCheckingRequest(false);
+      return;
+    }
+    getMyRequestForTrip(trip.id, profile.id).then(result => {
+      setMyRequestStatus(result?.status || null);
+      setCheckingRequest(false);
+    });
+  }, [trip.id, profile?.id, role]);
+
+  if (!driver) return null;
+
   const currentUserObj = profile ? {
     id: profile.id, name: profile.email, preferredName: profile.preferred_name || undefined,
     email: profile.email, year: profile.year || '', major: profile.major || '',
@@ -105,24 +152,67 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
   };
 
   const compatibility = currentUserObj && driver.id !== profile?.id ? computeCompatibility(currentUserObj, driverObj) : null;
+  const isMockTrip = trip.id.startsWith('mock-');
 
   const handleRequestSeat = async () => {
     if (!profile) return;
+    if (isMockTrip) {
+      toast.info('Demo trip — sign up as a driver to create real trips!');
+      return;
+    }
     setRequesting(true);
-    const { error } = await supabase.from('ride_requests').insert({
-      trip_id: trip.id,
-      rider_id: profile.id,
-      status: 'pending',
-    } as any);
+    const { error } = await requestSeat(trip.id, profile.id, message);
     if (error) {
       toast.error('Failed to request seat');
       console.error(error);
     } else {
       toast.success('Seat requested! 🎉', { description: 'The driver will review your request.' });
+      setMyRequestStatus('pending');
       setShowConfirm(false);
+      setMessage('');
       onUpdate();
     }
     setRequesting(false);
+  };
+
+  const renderAction = () => {
+    if (role !== 'rider') return null;
+    if (checkingRequest) return null;
+
+    if (myRequestStatus === 'pending') {
+      return (
+        <div className="w-full flex items-center justify-center gap-2 py-2 rounded-lg badge-pending text-sm font-medium">
+          <Loader2 className="w-4 h-4 animate-spin" /> Requested — Pending
+        </div>
+      );
+    }
+    if (myRequestStatus === 'accepted') {
+      return (
+        <div className="w-full py-2 rounded-lg badge-confirmed text-sm font-medium text-center">
+          ✅ You're in!
+        </div>
+      );
+    }
+    if (myRequestStatus === 'denied') {
+      return (
+        <div className="w-full py-2 rounded-lg badge-declined text-sm font-medium text-center">
+          Not this time
+        </div>
+      );
+    }
+
+    if (trip.seats_available === 0) {
+      return <div className="w-full py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium text-center">Full</div>;
+    }
+
+    return (
+      <button
+        onClick={() => setShowConfirm(true)}
+        className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:brightness-110 transition-all"
+      >
+        Join this trip
+      </button>
+    );
   };
 
   return (
@@ -188,17 +278,7 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
         )}
 
         {/* Action */}
-        {role === 'rider' && trip.seats_available > 0 && (
-          <button
-            onClick={() => setShowConfirm(true)}
-            className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:brightness-110 transition-all"
-          >
-            Request Seat
-          </button>
-        )}
-        {role === 'rider' && trip.seats_available === 0 && (
-          <div className="w-full py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium text-center">Full</div>
-        )}
+        {renderAction()}
       </div>
 
       {/* Confirm modal */}
@@ -218,14 +298,26 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
               className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-xl border border-border"
               onClick={e => e.stopPropagation()}
             >
-              <h3 className="font-display text-lg font-bold text-foreground mb-2">Confirm Seat Request</h3>
+              <h3 className="font-display text-lg font-bold text-foreground mb-2">Join this trip</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Trip to <strong>{trip.to_location}</strong> · ${trip.comp_rate} suggested
               </p>
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">
+                  Add a note (optional)
+                </label>
+                <input
+                  value={message}
+                  onChange={e => setMessage(e.target.value)}
+                  placeholder="e.g. Heading to PB for sunset"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground focus:ring-2 focus:ring-ring outline-none"
+                  maxLength={120}
+                />
+              </div>
               <div className="flex gap-2">
                 <button onClick={() => setShowConfirm(false)} className="flex-1 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors">Cancel</button>
                 <button onClick={handleRequestSeat} disabled={requesting} className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:brightness-110 transition-all disabled:opacity-50">
-                  {requesting ? 'Requesting...' : 'Confirm'}
+                  {requesting ? 'Requesting...' : 'Request Seat'}
                 </button>
               </div>
             </motion.div>

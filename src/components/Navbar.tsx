@@ -1,12 +1,10 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useDriverRequests } from '@/hooks/useRideRequests';
 import ThemeToggle from './ThemeToggle';
-import ProfileOverlay from './ProfileOverlay';
-import { Plus, LogOut, Shield, History, DollarSign, ChevronDown } from 'lucide-react';
+import { Plus, LogOut, Shield, History, DollarSign, ChevronDown, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CAMPUSES } from '@/lib/destinations';
 
 type Tab = 'feed' | 'map' | 'requests' | 'earnings' | 'history' | 'safety';
 
@@ -16,9 +14,7 @@ const Navbar = () => {
   const [role, setRole] = useState<'rider' | 'driver'>(
     profile?.role === 'driver' ? 'driver' : 'rider'
   );
-  const [showProfile, setShowProfile] = useState(false);
   const [showMore, setShowMore] = useState(false);
-  const [campus, setCampus] = useState('UCSD');
   const navigate = useNavigate();
 
   const { requests } = useDriverRequests();
@@ -51,22 +47,9 @@ const Navbar = () => {
           <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shadow-sm">
             <span className="text-lg">🔱</span>
           </div>
-          <div>
-            <span className="font-display text-lg font-extrabold text-primary-foreground tracking-tight">
-              TRITON RIDESHARE
-            </span>
-            <select
-              value={campus}
-              onChange={e => setCampus(e.target.value)}
-              className="block text-[10px] text-primary-foreground/60 bg-transparent border-none outline-none -mt-0.5 cursor-pointer"
-            >
-              {CAMPUSES.map(c => (
-                <option key={c.value} value={c.value} disabled={!c.active} className="text-foreground">
-                  {c.label}{!c.active ? ' (Coming soon)' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
+          <span className="font-display text-lg font-extrabold text-primary-foreground tracking-tight">
+            DRIVE UCSD
+          </span>
         </div>
 
         {/* Primary tabs */}
@@ -166,11 +149,19 @@ const Navbar = () => {
             </motion.div>
           )}
 
+          <button
+            onClick={() => navigate('/chats')}
+            className="p-2 rounded-full text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all"
+            title="Chats"
+          >
+            <MessageCircle className="w-4 h-4" />
+          </button>
+
           <ThemeToggle />
 
           {profile && (
             <button
-              onClick={() => setShowProfile(true)}
+              onClick={() => navigate('/profile/me')}
               className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground text-sm font-bold hover:brightness-110 transition-all overflow-hidden ring-2 ring-primary-foreground/20"
               title="My Profile"
             >
@@ -192,26 +183,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {profile && (
-        <ProfileOverlay
-          user={{
-            id: profile.id,
-            name: profile.email,
-            preferredName: profile.preferred_name || undefined,
-            email: profile.email,
-            year: profile.year || '',
-            major: profile.major || '',
-            rating: 5.0,
-            interests: profile.interests || [],
-            clubs: profile.clubs || [],
-            college: profile.college || '',
-            musicTag: profile.music_tag || undefined,
-            avatarUrl: profile.avatar_url || undefined,
-          }}
-          open={showProfile}
-          onClose={() => setShowProfile(false)}
-        />
-      )}
+      
     </nav>
   );
 };

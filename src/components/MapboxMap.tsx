@@ -36,19 +36,28 @@ const DEST_COORDS: Record<string, [number, number]> = {
   'UCSD': [-117.2340, 32.8801],
 };
 
-// ── Mock trips fallback ──
-const now = new Date();
-const h = (hours: number) => new Date(now.getTime() + hours * 3600000).toISOString();
-const MOCK_TRIPS: MapTrip[] = [
-  { id: 'm1', to_location: 'Pacific Beach', departure_time: h(0.5), seats_available: 3, seats_total: 4, comp_rate: 5, notes: 'Chill beach trip 🏖️', coordinates: null, driver_id: 'd1', driver: { preferred_name: 'Alex', college: 'Sixth', year: '3rd', major: 'CS', interests: ['surfing','coding','boba'], clubs: ['ACM','Surf Club'], music_tag: 'indie' } },
-  { id: 'm2', to_location: 'Downtown', departure_time: h(1), seats_available: 2, seats_total: 3, comp_rate: 7, notes: 'Gaslamp dinner', coordinates: null, driver_id: 'd2', driver: { preferred_name: 'Maya', college: 'Muir', year: '2nd', major: 'Data Science', interests: ['hiking','boba','anime'], clubs: ['DS3'], music_tag: 'k-pop' } },
-  { id: 'm3', to_location: 'Grocery', departure_time: h(0.25), seats_available: 1, seats_total: 2, comp_rate: 3, notes: "TJ's run", coordinates: null, driver_id: 'd3', driver: { preferred_name: 'Jordan', college: 'Marshall', year: '4th', major: 'Econ', interests: ['basketball','coding','music'], clubs: ['Intramurals'], music_tag: 'hip-hop' } },
-  { id: 'm4', to_location: 'Airport', departure_time: h(3), seats_available: 4, seats_total: 4, comp_rate: 15, notes: 'SAN drop-off ✈️', coordinates: null, driver_id: 'd1', driver: { preferred_name: 'Alex', college: 'Sixth', year: '3rd', major: 'CS', interests: ['surfing','coding','boba'], clubs: ['ACM','Surf Club'], music_tag: 'indie' } },
-  { id: 'm5', to_location: 'Pacific Beach', departure_time: h(2), seats_available: 2, seats_total: 3, comp_rate: 5, notes: 'Sunset session 🌅', coordinates: null, driver_id: 'd4', driver: { preferred_name: 'Priya', college: 'Sixth', year: '2nd', major: 'CogSci', interests: ['hiking','photography','music'], clubs: ['Photo Club'], music_tag: 'indie' } },
-  { id: 'm6', to_location: 'Downtown', departure_time: h(4), seats_available: 3, seats_total: 4, comp_rate: 8, notes: 'Concert tonight 🎸', coordinates: null, driver_id: 'd3', driver: { preferred_name: 'Jordan', college: 'Marshall', year: '4th', major: 'Econ', interests: ['basketball','coding','music'], clubs: ['Intramurals'], music_tag: 'hip-hop' } },
-  { id: 'm7', to_location: 'Grocery', departure_time: h(1.5), seats_available: 2, seats_total: 3, comp_rate: 3, notes: 'Costco run 🛒', coordinates: null, driver_id: 'd5', driver: { preferred_name: 'Ethan', college: 'Warren', year: '3rd', major: 'MechE', interests: ['gaming','anime','boba'], clubs: ['IEEE','Esports'], music_tag: 'lo-fi' } },
-  { id: 'm8', to_location: 'Pacific Beach', departure_time: h(5), seats_available: 1, seats_total: 2, comp_rate: 5, notes: 'Morning surf 🏄', coordinates: null, driver_id: 'd4', driver: { preferred_name: 'Priya', college: 'Sixth', year: '2nd', major: 'CogSci', interests: ['hiking','photography','music'], clubs: ['Photo Club'], music_tag: 'indie' } },
-];
+// ── Mock trips fallback — uses shared data ──
+import { MOCK_DB_TRIPS } from '@/lib/mockTripsData';
+const MOCK_TRIPS: MapTrip[] = MOCK_DB_TRIPS.map(t => ({
+  id: t.id,
+  to_location: t.to_location,
+  departure_time: t.departure_time,
+  seats_available: t.seats_available,
+  seats_total: t.seats_total,
+  comp_rate: t.comp_rate,
+  notes: t.notes,
+  coordinates: t.coordinates,
+  driver_id: t.driver_id,
+  driver: t.driver ? {
+    preferred_name: t.driver.preferred_name,
+    college: t.driver.college,
+    year: t.driver.year,
+    major: t.driver.major,
+    interests: t.driver.interests,
+    clubs: t.driver.clubs,
+    music_tag: t.driver.music_tag,
+  } : undefined,
+}));
 
 export interface MapTrip {
   id: string;

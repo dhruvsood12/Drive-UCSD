@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           age: number | null
           avatar_url: string | null
+          clean_car_pref: string | null
           clubs: string[] | null
           college: string | null
           created_at: string | null
@@ -28,6 +29,10 @@ export type Database = {
           major: string | null
           music_tag: string | null
           onboarding_complete: boolean | null
+          personality_music: string | null
+          personality_schedule: string | null
+          personality_social: string | null
+          personality_talk: string | null
           preferred_name: string | null
           role: string | null
           year: string | null
@@ -35,6 +40,7 @@ export type Database = {
         Insert: {
           age?: number | null
           avatar_url?: string | null
+          clean_car_pref?: string | null
           clubs?: string[] | null
           college?: string | null
           created_at?: string | null
@@ -45,6 +51,10 @@ export type Database = {
           major?: string | null
           music_tag?: string | null
           onboarding_complete?: boolean | null
+          personality_music?: string | null
+          personality_schedule?: string | null
+          personality_social?: string | null
+          personality_talk?: string | null
           preferred_name?: string | null
           role?: string | null
           year?: string | null
@@ -52,6 +62,7 @@ export type Database = {
         Update: {
           age?: number | null
           avatar_url?: string | null
+          clean_car_pref?: string | null
           clubs?: string[] | null
           college?: string | null
           created_at?: string | null
@@ -62,6 +73,10 @@ export type Database = {
           major?: string | null
           music_tag?: string | null
           onboarding_complete?: boolean | null
+          personality_music?: string | null
+          personality_schedule?: string | null
+          personality_social?: string | null
+          personality_talk?: string | null
           preferred_name?: string | null
           role?: string | null
           year?: string | null

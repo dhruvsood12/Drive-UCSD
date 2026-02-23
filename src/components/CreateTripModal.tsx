@@ -15,6 +15,7 @@ const CreateTripModal = () => {
   const [rate, setRate] = useState(5);
   const [notes, setNotes] = useState('');
   const [vibe, setVibe] = useState('custom');
+  const [flexibility, setFlexibility] = useState(0);
   const [saving, setSaving] = useState(false);
   const [destSearch, setDestSearch] = useState('');
 
@@ -52,6 +53,8 @@ const CreateTripModal = () => {
       comp_rate: rate,
       notes,
       vibe,
+      status: 'upcoming',
+      flexibility_minutes: flexibility,
       coordinates: destObj ? { lng: destObj.coords[0], lat: destObj.coords[1] } : {},
     } as any);
 
@@ -154,6 +157,20 @@ const CreateTripModal = () => {
                   <label className="block text-sm font-medium text-foreground mb-1">$ Suggested</label>
                   <input type="number" min={0} value={rate} onChange={e => setRate(Number(e.target.value))} className="w-full h-10 px-3 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Departure Flexibility</label>
+                <select
+                  value={flexibility}
+                  onChange={e => setFlexibility(Number(e.target.value))}
+                  className="w-full h-10 px-3 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value={0}>Exact time</option>
+                  <option value={5}>± 5 min</option>
+                  <option value={10}>± 10 min</option>
+                  <option value={15}>± 15 min</option>
+                  <option value={30}>± 30 min</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Notes</label>

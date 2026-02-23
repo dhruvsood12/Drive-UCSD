@@ -15,6 +15,11 @@ export interface DbTrip {
   notes: string;
   coordinates: any;
   created_at: string;
+  status?: string;
+  flexibility_minutes?: number;
+  started_at?: string;
+  completed_at?: string;
+  vibe?: string;
   driver?: {
     id: string;
     preferred_name: string | null;
@@ -50,6 +55,14 @@ export function useTrips(filters?: { destination?: string | null; timeWindow?: s
     }
 
     let result = (data || []) as unknown as DbTrip[];
+
+    // Filter out expired/completed trips (client-side expiration)
+    result = result.filter(t => {
+      if (t.status === 'expired' || t.status === 'completed') return false;
+      const dep = new Date(t.departure_time).getTime();
+      if (dep < Date.now() - 5 * 60 * 1000 && t.status !== 'active') return false;
+      return true;
+    });
 
     // Merge in mock data so the feed always looks populated
     const dbIds = new Set(result.map(t => t.id));

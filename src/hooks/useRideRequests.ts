@@ -153,6 +153,42 @@ export async function acceptRequest(requestId: string, tripId: string) {
   return { error: null };
 }
 
+/** Send a system message to a trip chat */
+export async function sendSystemMessage(tripId: string, content: string) {
+  const SYSTEM_SENDER = '00000000-0000-0000-0000-000000000000';
+  // System messages bypass RLS — use edge function or service role if needed
+  // For demo, insert directly (will work if user is a trip participant)
+  await supabase.from('chat_messages').insert({
+    trip_id: tripId,
+    sender_id: SYSTEM_SENDER,
+    content,
+  } as any);
+}
+
+/** Start a ride (driver action) */
+export async function startRide(tripId: string) {
+  const { error } = await supabase.from('trips').update({
+    status: 'active',
+    started_at: new Date().toISOString(),
+  } as any).eq('id', tripId);
+  if (!error) {
+    await sendSystemMessage(tripId, '🚗 Ride has begun!');
+  }
+  return { error };
+}
+
+/** Complete a ride */
+export async function completeRide(tripId: string) {
+  const { error } = await supabase.from('trips').update({
+    status: 'completed',
+    completed_at: new Date().toISOString(),
+  } as any).eq('id', tripId);
+  if (!error) {
+    await sendSystemMessage(tripId, '✅ Ride completed! Thanks for riding together.');
+  }
+  return { error };
+}
+
 /** Deny a ride request */
 export async function denyRequest(requestId: string) {
   const { error } = await supabase

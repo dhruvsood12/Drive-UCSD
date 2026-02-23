@@ -103,7 +103,11 @@ const MapboxMap = ({ trips: externalTrips, directionFilter = 'all', searchQuery 
   const { profile } = useAuth();
   const { weights: mlWeights } = useMLWeights();
 
-  const token = 'pk.eyJ1IjoiZGhydXYxNGsiLCJhIjoiY21sd3l3bmN0MG4xeDNlcHB2M2ZseXNjciJ9.6IvuBUbVJQm25b83oPIAtw';
+ const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+
+if (!token) {
+  throw new Error("Missing VITE_MAPBOX_ACCESS_TOKEN");
+}
 
   // Filter trips: remove expired, apply direction filter
   const trips = useMemo(() => {

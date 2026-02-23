@@ -4,13 +4,14 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Car, X, Upload, Search, Check } from 'lucide-react';
+import DriverVehicleForm from '@/components/DriverVehicleForm';
 import { UCSD_CLUBS, INTEREST_OPTIONS } from '@/lib/ucsdClubs';
 import { UCSD_MAJORS as UCSD_MAJORS_LIST } from '@/lib/ucsdMajors';
 
 const COLLEGES = ['Revelle', 'Muir', 'Marshall', 'Warren', 'Sixth', 'Seventh', 'ERC'];
 const YEARS = ['1st', '2nd', '3rd', '4th', '5th+', 'Grad'];
 const GENDERS = ['Male', 'Female', 'Non-binary', 'Other', 'Prefer not to say'];
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5; // Added vehicle step for drivers
 
 const Onboarding = () => {
   const { session, profile, refreshProfile } = useAuth();
@@ -43,6 +44,13 @@ const Onboarding = () => {
   const [clubs, setClubs] = useState<string[]>([]);
   const [clubSearch, setClubSearch] = useState('');
   const [showClubDropdown, setShowClubDropdown] = useState(false);
+
+  // Step 5 - Vehicle (drivers only)
+  const [carMake, setCarMake] = useState('');
+  const [carModel, setCarModel] = useState('');
+  const [carYear, setCarYear] = useState<number | ''>('');
+  const [carColor, setCarColor] = useState('');
+  const [licensePlate, setLicensePlate] = useState('');
 
   const filteredClubs = useMemo(() => {
     if (!clubSearch.trim()) return [];
@@ -80,15 +88,30 @@ const Onboarding = () => {
       toast.error('Please select at least 3 interests');
       return false;
     }
+    if (s === 5 && (role === 'driver' || role === 'both')) {
+      if (!carMake || !carModel || !carYear || !licensePlate) {
+        toast.error('Please fill in all vehicle details');
+        return false;
+      }
+    }
     return true;
   };
 
   const nextStep = () => {
-    if (validateStep(step)) setStep(s => Math.min(s + 1, TOTAL_STEPS));
+    if (validateStep(step)) {
+      // Skip vehicle step for riders
+      if (step === 4 && role === 'rider') {
+        handleFinish();
+        return;
+      }
+      setStep(s => Math.min(s + 1, TOTAL_STEPS));
+    }
   };
 
   const handleFinish = async () => {
-    if (!validateStep(4)) return;
+    // Validate current step
+    const currentStep = (role === 'rider') ? 4 : 5;
+    if (!validateStep(currentStep)) return;
 
     setSaving(true);
     let avatarUrl: string | null = null;
@@ -129,6 +152,17 @@ const Onboarding = () => {
       toast.error('Failed to save profile');
       console.error(error);
     } else {
+      // Save vehicle info for drivers
+      if ((role === 'driver' || role === 'both') && carMake && carModel && carYear && licensePlate) {
+        await supabase.from('driver_vehicles').upsert({
+          user_id: session.user.id,
+          car_make: carMake,
+          car_model: carModel,
+          car_year: Number(carYear),
+          car_color: carColor || null,
+          license_plate: licensePlate,
+        } as any, { onConflict: 'user_id' });
+      }
       await refreshProfile();
       toast.success('Profile complete! 🎉');
       navigate('/');
@@ -371,6 +405,40 @@ const Onboarding = () => {
 
               <div className="flex gap-2 pt-2">
                 <button onClick={() => setStep(3)} className="flex-1 py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors">Back</button>
+                <button
+                  onClick={nextStep}
+                  disabled={saving}
+                  className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:brightness-110 transition-all disabled:opacity-50"
+                >
+                  {role === 'rider' ? (saving ? 'Saving...' : 'Complete Setup') : 'Next'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5 — Vehicle (drivers only) */}
+          {step === 5 && (role === 'driver' || role === 'both') && (
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+              <div>
+                <h3 className="font-display text-lg font-bold text-foreground mb-1">Your Vehicle</h3>
+                <p className="text-sm text-muted-foreground">Riders will see your car details when requesting a ride</p>
+              </div>
+
+              <DriverVehicleForm
+                carMake={carMake}
+                carModel={carModel}
+                carYear={carYear}
+                carColor={carColor}
+                licensePlate={licensePlate}
+                onChangeCarMake={setCarMake}
+                onChangeCarModel={setCarModel}
+                onChangeCarYear={setCarYear}
+                onChangeCarColor={setCarColor}
+                onChangeLicensePlate={setLicensePlate}
+              />
+
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setStep(4)} className="flex-1 py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors">Back</button>
                 <button
                   onClick={handleFinish}
                   disabled={saving}

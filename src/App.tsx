@@ -12,6 +12,7 @@ import Onboarding from "./pages/Onboarding";
 import ProfilePage from "./pages/ProfilePage";
 import ChatInbox from "./pages/ChatInbox";
 import ChatDetail from "./pages/ChatDetail";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/profile/:userId" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/chats" element={<ProtectedRoute><ChatInbox /></ProtectedRoute>} />
             <Route path="/chats/:chatId" element={<ProtectedRoute><ChatDetail /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

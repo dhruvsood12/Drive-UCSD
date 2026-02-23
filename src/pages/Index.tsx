@@ -6,9 +6,10 @@ import EarningsPage from '@/components/EarningsPage';
 import RideHistoryPage from '@/components/RideHistoryPage';
 import SafetyPage from '@/components/SafetyPage';
 import CreateTripModal from '@/components/CreateTripModal';
+import WalletCard from '@/components/WalletCard';
 import { useState, useEffect } from 'react';
 
-type Tab = 'feed' | 'map' | 'requests' | 'earnings' | 'history' | 'safety';
+type Tab = 'feed' | 'map' | 'requests' | 'earnings' | 'history' | 'safety' | 'wallet';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<Tab>('feed');
@@ -35,6 +36,7 @@ const Index = () => {
         {activeTab === 'earnings' && <EarningsPage />}
         {activeTab === 'history' && <RideHistoryPage />}
         {activeTab === 'safety' && <SafetyPage />}
+        {activeTab === 'wallet' && <WalletCard />}
       </main>
       <CreateTripModal />
     </div>

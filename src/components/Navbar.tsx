@@ -1,7 +1,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useDriverRequests } from '@/hooks/useRideRequests';
+import { useAdmin } from '@/hooks/useAdmin';
+import { useWallet } from '@/hooks/useWallet';
 import ThemeToggle from './ThemeToggle';
-import { Plus, LogOut, Shield, History, DollarSign, ChevronDown, MessageCircle } from 'lucide-react';
+import { Plus, LogOut, Shield, History, DollarSign, ChevronDown, MessageCircle, Wallet } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +21,8 @@ const Navbar = () => {
 
   const { requests } = useDriverRequests();
   const pendingCount = requests.filter(r => r.status === 'pending').length;
+  const { isAdmin } = useAdmin();
+  const { balance } = useWallet();
 
   (window as any).__driveState = { activeTab, setActiveTab, role, setRole };
 
@@ -35,6 +39,7 @@ const Navbar = () => {
 
   const moreTabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     ...(role === 'driver' ? [{ key: 'earnings' as Tab, label: 'Earnings', icon: <DollarSign className="w-4 h-4" /> }] : []),
+    { key: 'wallet' as Tab, label: 'Wallet', icon: <Wallet className="w-4 h-4" /> },
     { key: 'history', label: 'Ride History', icon: <History className="w-4 h-4" /> },
     { key: 'safety', label: 'Safety', icon: <Shield className="w-4 h-4" /> },
   ];
@@ -149,6 +154,12 @@ const Navbar = () => {
             </motion.div>
           )}
 
+          {/* Wallet balance */}
+          <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-foreground/10 text-primary-foreground/80 text-xs font-medium">
+            <Wallet className="w-3.5 h-3.5" />
+            <span>${balance.toFixed(0)}</span>
+          </div>
+
           <button
             onClick={() => navigate('/chats')}
             className="p-2 rounded-full text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-all"
@@ -156,6 +167,16 @@ const Navbar = () => {
           >
             <MessageCircle className="w-4 h-4" />
           </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="p-2 rounded-full text-secondary hover:bg-primary-foreground/10 transition-all"
+              title="Admin Dashboard"
+            >
+              <Shield className="w-4 h-4" />
+            </button>
+          )}
 
           <ThemeToggle />
 

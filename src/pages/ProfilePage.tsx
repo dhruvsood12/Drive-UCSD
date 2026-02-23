@@ -7,8 +7,11 @@ import { UCSD_CLUBS, INTEREST_OPTIONS } from '@/lib/ucsdClubs';
 import { UCSD_MAJORS } from '@/lib/ucsdMajors';
 import { TRIP_VIBES } from '@/lib/destinations';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Shield, Star, MapPin, GraduationCap, Calendar, Music, Users, Sparkles, MessageCircle, Flag, Share2, Pencil, Upload, X, Search, Check, Award } from 'lucide-react';
+import { ArrowLeft, Shield, Star, MapPin, GraduationCap, Calendar, Music, Users, Sparkles, MessageCircle, Flag, Share2, Pencil, Upload, X, Search, Check, Award, Ban, Car, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
+import ReportModal from '@/components/ReportModal';
+import WalletCard from '@/components/WalletCard';
+import { useBlocking } from '@/hooks/useBlocking';
 
 interface DbProfile {
   id: string;
@@ -60,6 +63,9 @@ const ProfilePage = () => {
   const [editing, setEditing] = useState(false);
   const [rideCount, setRideCount] = useState(0);
   const [avgRating, setAvgRating] = useState(5.0);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [vehicleInfo, setVehicleInfo] = useState<{ car_make: string; car_model: string; car_year: number; car_color: string | null; license_plate: string } | null>(null);
+  const { blockUser, unblockUser, isBlocked } = useBlocking();
 
   const isOwnProfile = userId === user?.id || userId === 'me';
   const targetId = isOwnProfile ? user?.id : userId;
@@ -80,6 +86,10 @@ const ProfilePage = () => {
       if (ratings && ratings.length > 0) {
         setAvgRating(Math.round((ratings.reduce((s, r) => s + r.score, 0) / ratings.length) * 10) / 10);
       }
+
+      // Vehicle info
+      const { data: vehicle } = await supabase.from('driver_vehicles').select('car_make, car_model, car_year, car_color, license_plate').eq('user_id', targetId).maybeSingle();
+      if (vehicle) setVehicleInfo(vehicle as any);
 
       setLoading(false);
     };
@@ -436,13 +446,22 @@ const ProfilePage = () => {
                   <MessageCircle className="w-4 h-4" /> Message
                 </button>
                 <button
-                  onClick={() => toast.info('Profile shared!')}
+                  onClick={async () => {
+                    if (targetId && isBlocked(targetId)) {
+                      await unblockUser(targetId);
+                      toast.success('User unblocked');
+                    } else if (targetId) {
+                      await blockUser(targetId);
+                      toast.success('User blocked');
+                    }
+                  }}
                   className="p-3 rounded-xl border border-border text-foreground hover:bg-muted transition-colors"
+                  title={targetId && isBlocked(targetId) ? 'Unblock' : 'Block'}
                 >
-                  <Share2 className="w-4 h-4" />
+                  <Ban className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => toast.info('Report submitted')}
+                  onClick={() => setReportOpen(true)}
                   className="p-3 rounded-xl border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                 >
                   <Flag className="w-4 h-4" />
@@ -450,6 +469,42 @@ const ProfilePage = () => {
               </>
             )}
           </div>
+
+          {/* Wallet (own profile only) */}
+          {isOwnProfile && (
+            <div className="pb-8">
+              <WalletCard />
+            </div>
+          )}
+
+          {/* Vehicle info */}
+          {vehicleInfo && (
+            <Section title="Vehicle">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Car className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {vehicleInfo.car_year} {vehicleInfo.car_make} {vehicleInfo.car_model}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {vehicleInfo.car_color && `${vehicleInfo.car_color} • `}Plate: {vehicleInfo.license_plate}
+                  </p>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          {/* Report Modal */}
+          {targetId && (
+            <ReportModal
+              open={reportOpen}
+              onClose={() => setReportOpen(false)}
+              reportedId={targetId}
+              reportedName={p.preferred_name || p.email.split('@')[0]}
+            />
+          )}
         </div>
       </div>
     </div>

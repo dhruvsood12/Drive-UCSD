@@ -46,6 +46,27 @@ export type Database = {
           },
         ]
       }
+      model_weights: {
+        Row: {
+          feature_name: string
+          id: string
+          updated_at: string
+          weight_value: number
+        }
+        Insert: {
+          feature_name: string
+          id?: string
+          updated_at?: string
+          weight_value?: number
+        }
+        Update: {
+          feature_name?: string
+          id?: string
+          updated_at?: string
+          weight_value?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number | null

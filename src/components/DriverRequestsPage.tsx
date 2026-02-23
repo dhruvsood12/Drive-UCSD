@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useDriverRequests, acceptRequest, denyRequest, RideRequestRow } from '@/hooks/useRideRequests';
 import { useAuth } from '@/contexts/AuthContext';
-import { computeCompatibility, profileToCompatibility } from '@/lib/compatibility';
+import { dbProfileToFeatureProfile, computeMLCompatibilitySync } from '@/ml';
+import { useMLWeights } from '@/hooks/useMLCompatibility';
 import { formatDepartureTime } from '@/lib/utils-drive';
 import CompatibilityBreakdown from './CompatibilityBreakdown';
 import ProfileOverlay from './ProfileOverlay';
@@ -70,23 +71,13 @@ const DriverRequestsPage = () => {
 
 const RequestCard = ({ request, onAction, readonly }: { request: RideRequestRow; onAction: () => void; readonly?: boolean }) => {
   const { profile } = useAuth();
+  const { weights: mlWeights } = useMLWeights();
   const [showProfile, setShowProfile] = useState(false);
   const [acting, setActing] = useState<'accept' | 'deny' | null>(null);
 
   const rider = request.rider;
   const trip = request.trip;
   if (!rider || !trip) return null;
-
-  const currentUserCompat = profile ? profileToCompatibility(profile as any) : null;
-  const riderCompat = {
-    id: rider.id,
-    interests: rider.interests || [],
-    clubs: rider.clubs || [],
-    college: rider.college || '',
-    major: rider.major || '',
-    year: rider.year || '',
-    musicTag: rider.music_tag || undefined,
-  };
 
   const riderObj: User = {
     id: rider.id, name: rider.preferred_name || 'Rider', preferredName: rider.preferred_name || undefined,
@@ -96,7 +87,12 @@ const RequestCard = ({ request, onAction, readonly }: { request: RideRequestRow;
     avatarUrl: rider.avatar_url || undefined,
   };
 
-  const compatibility = currentUserCompat ? computeCompatibility(currentUserCompat, riderCompat) : null;
+  const compatibility = (() => {
+    if (!profile || !rider) return null;
+    const a = dbProfileToFeatureProfile(profile as any);
+    const b = dbProfileToFeatureProfile(rider as any);
+    return computeMLCompatibilitySync(a, b, mlWeights);
+  })();
 
   const handleAccept = async () => {
     setActing('accept');

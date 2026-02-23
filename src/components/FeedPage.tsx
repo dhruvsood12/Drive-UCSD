@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useTrips, DbTrip } from '@/hooks/useTrips';
 import { useAuth } from '@/contexts/AuthContext';
 import { requestSeat, getMyRequestForTrip } from '@/hooks/useRideRequests';
-import { computeCompatibility, profileToCompatibility } from '@/lib/compatibility';
+import { dbProfileToFeatureProfile, computeMLCompatibilitySync } from '@/ml';
+import { useMLWeights } from '@/hooks/useMLCompatibility';
 import { formatDepartureTime } from '@/lib/utils-drive';
 import CompatibilityBreakdown from './CompatibilityBreakdown';
 import ProfileOverlay from './ProfileOverlay';
@@ -35,6 +36,7 @@ const FeedPage = () => {
   const [showHero, setShowHero] = useState(true);
 
   const role = (window as any).__driveState?.role || 'rider';
+  const { weights: mlWeights } = useMLWeights();
 
   const filteredTrips = trips.filter(t => {
     if (vibeFilter && (t as any).vibe !== vibeFilter) return false;
@@ -220,7 +222,7 @@ const FeedPage = () => {
             <div className="flex flex-col gap-4">
               {filteredTrips.map((trip, i) => (
                 <motion.div key={trip.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                  <RealTripCard trip={trip} onUpdate={refetch} />
+                  <RealTripCard trip={trip} onUpdate={refetch} mlWeights={mlWeights} />
                 </motion.div>
               ))}
             </div>
@@ -231,7 +233,7 @@ const FeedPage = () => {
   );
 };
 
-const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }) => {
+const RealTripCard = ({ trip, onUpdate, mlWeights }: { trip: DbTrip; onUpdate: () => void; mlWeights: any }) => {
   const { profile } = useAuth();
   const [showProfile, setShowProfile] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -261,17 +263,6 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
 
   if (!driver) return null;
 
-  const currentUserCompat = profile ? profileToCompatibility(profile as any) : null;
-  const driverCompat = {
-    id: driver.id,
-    interests: driver.interests || [],
-    clubs: driver.clubs || [],
-    college: driver.college || '',
-    major: driver.major || '',
-    year: driver.year || '',
-    musicTag: driver.music_tag || undefined,
-  };
-
   const driverObj = {
     id: driver.id, name: driver.preferred_name || 'Driver', preferredName: driver.preferred_name || undefined,
     email: '', year: driver.year || '', major: driver.major || '',
@@ -280,7 +271,13 @@ const RealTripCard = ({ trip, onUpdate }: { trip: DbTrip; onUpdate: () => void }
     avatarUrl: driver.avatar_url || undefined,
   };
 
-  const compatibility = currentUserCompat && driver.id !== profile?.id ? computeCompatibility(currentUserCompat, driverCompat) : null;
+  // ML Compatibility
+  const compatibility = (() => {
+    if (!profile || driver.id === profile?.id) return null;
+    const a = dbProfileToFeatureProfile(profile as any);
+    const b = dbProfileToFeatureProfile(driver as any);
+    return computeMLCompatibilitySync(a, b, mlWeights);
+  })();
   const isMockTrip = trip.id.startsWith('mock-');
 
   const handleRequestSeat = async () => {

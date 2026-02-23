@@ -46,6 +46,42 @@ export type Database = {
           },
         ]
       }
+      driver_vehicles: {
+        Row: {
+          car_color: string | null
+          car_make: string
+          car_model: string
+          car_year: number
+          created_at: string | null
+          id: string
+          license_plate: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          car_color?: string | null
+          car_make: string
+          car_model: string
+          car_year: number
+          created_at?: string | null
+          id?: string
+          license_plate: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          car_color?: string | null
+          car_make?: string
+          car_model?: string
+          car_year?: number
+          created_at?: string | null
+          id?: string
+          license_plate?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       model_weights: {
         Row: {
           feature_name: string
@@ -66,6 +102,50 @@ export type Database = {
           weight_value?: number
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          payee_id: string
+          payer_id: string
+          status: string | null
+          trip_id: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          payee_id: string
+          payer_id: string
+          status?: string | null
+          trip_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          payee_id?: string
+          payer_id?: string
+          status?: string | null
+          trip_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -89,6 +169,9 @@ export type Database = {
           personality_talk: string | null
           preferred_name: string | null
           role: string | null
+          suspended: boolean | null
+          suspended_at: string | null
+          suspended_by: string | null
           year: string | null
         }
         Insert: {
@@ -112,6 +195,9 @@ export type Database = {
           personality_talk?: string | null
           preferred_name?: string | null
           role?: string | null
+          suspended?: boolean | null
+          suspended_at?: string | null
+          suspended_by?: string | null
           year?: string | null
         }
         Update: {
@@ -135,6 +221,9 @@ export type Database = {
           personality_talk?: string | null
           preferred_name?: string | null
           role?: string | null
+          suspended?: boolean | null
+          suspended_at?: string | null
+          suspended_by?: string | null
           year?: string | null
         }
         Relationships: []
@@ -179,32 +268,41 @@ export type Database = {
       }
       reports: {
         Row: {
+          admin_notes: string | null
           created_at: string | null
           details: string | null
           id: string
           reason: string
           reported_id: string
           reporter_id: string
+          resolved_at: string | null
+          resolved_by: string | null
           status: string | null
           trip_id: string | null
         }
         Insert: {
+          admin_notes?: string | null
           created_at?: string | null
           details?: string | null
           id?: string
           reason: string
           reported_id: string
           reporter_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
           status?: string | null
           trip_id?: string | null
         }
         Update: {
+          admin_notes?: string | null
           created_at?: string | null
           details?: string | null
           id?: string
           reason?: string
           reported_id?: string
           reporter_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
           status?: string | null
           trip_id?: string | null
         }
@@ -345,15 +443,81 @@ export type Database = {
           },
         ]
       }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          balance: number | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -480,6 +644,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

@@ -393,43 +393,55 @@ export type Database = {
       trips: {
         Row: {
           comp_rate: number | null
+          completed_at: string | null
           coordinates: Json | null
           created_at: string | null
           departure_time: string
           driver_id: string
+          flexibility_minutes: number | null
           from_location: string | null
           id: string
           notes: string | null
           seats_available: number
           seats_total: number
+          started_at: string | null
+          status: string
           to_location: string
           vibe: string | null
         }
         Insert: {
           comp_rate?: number | null
+          completed_at?: string | null
           coordinates?: Json | null
           created_at?: string | null
           departure_time: string
           driver_id: string
+          flexibility_minutes?: number | null
           from_location?: string | null
           id?: string
           notes?: string | null
           seats_available?: number
           seats_total?: number
+          started_at?: string | null
+          status?: string
           to_location: string
           vibe?: string | null
         }
         Update: {
           comp_rate?: number | null
+          completed_at?: string | null
           coordinates?: Json | null
           created_at?: string | null
           departure_time?: string
           driver_id?: string
+          flexibility_minutes?: number | null
           from_location?: string | null
           id?: string
           notes?: string | null
           seats_available?: number
           seats_total?: number
+          started_at?: string | null
+          status?: string
           to_location?: string
           vibe?: string | null
         }
@@ -508,6 +520,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      expire_old_trips: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

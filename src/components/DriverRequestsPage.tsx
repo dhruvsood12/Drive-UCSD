@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useDriverRequests, acceptRequest, denyRequest, RideRequestRow } from '@/hooks/useRideRequests';
+import { useDriverRequests, acceptRequest, denyRequest, sendSystemMessage, startRide, completeRide, RideRequestRow } from '@/hooks/useRideRequests';
 import { useAuth } from '@/contexts/AuthContext';
 import { dbProfileToFeatureProfile, computeMLCompatibilitySync } from '@/ml';
 import { useMLWeights } from '@/hooks/useMLCompatibility';
@@ -106,6 +106,8 @@ const RequestCard = ({ request, onAction, readonly }: { request: RideRequestRow;
         user_id: rider.id,
         role: 'rider',
       } as any);
+      // Send system message
+      await sendSystemMessage(trip.id, `🎉 ${rider.preferred_name || 'A rider'} joined the ride!`);
       toast.success('Accepted — they\'re in! 🎉');
       onAction();
     }

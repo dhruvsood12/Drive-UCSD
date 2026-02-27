@@ -51,6 +51,9 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --card-elevated: 0 4px 16px -2px hsl(215 40% 12% / 0.06), 0 1px 3px hsl(215 40% 12% / 0.04);
+    --card-interactive: 0 8px 30px -8px hsl(215 65% 22% / 0.1);
   }
 
   .dark {
@@ -87,6 +90,9 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --card-elevated: 0 4px 16px -2px hsl(0 0% 0% / 0.3);
+    --card-interactive: 0 8px 30px -8px hsl(42 100% 52% / 0.08);
   }
 }
 
@@ -104,19 +110,57 @@
 }
 
 @layer components {
+  /* ——— Gradients ——— */
   .triton-gradient {
     background: linear-gradient(135deg, hsl(215 65% 22%), hsl(215 55% 32%));
   }
   .triton-gradient-accent {
     background: linear-gradient(135deg, hsl(215 65% 22%), hsl(215 55% 28%), hsl(42 100% 52% / 0.2));
   }
-  /* Legacy alias */
   .ucsd-gradient {
     background: linear-gradient(135deg, hsl(215 65% 22%), hsl(215 55% 32%));
   }
   .gold-glow {
     box-shadow: 0 0 20px hsl(42 100% 52% / 0.3);
   }
+
+  /* ——— Typography Hierarchy ——— */
+  .text-page-title {
+    @apply font-display text-3xl font-semibold tracking-tight text-foreground;
+  }
+  .text-section-title {
+    @apply font-display text-xl font-semibold text-foreground;
+  }
+  .text-card-title {
+    @apply text-lg font-medium text-foreground;
+  }
+  .text-body {
+    @apply text-sm text-muted-foreground;
+  }
+  .text-label {
+    @apply text-xs uppercase tracking-wide text-muted-foreground font-semibold;
+  }
+
+  /* ——— Card Variants ——— */
+  .card-subtle {
+    @apply bg-card rounded-2xl border border-border;
+  }
+  .card-elevated {
+    @apply bg-card rounded-2xl border border-border;
+    box-shadow: var(--card-elevated);
+  }
+  .card-interactive {
+    @apply bg-card rounded-2xl border border-border transition-all duration-200 ease-out cursor-pointer;
+  }
+  .card-interactive:hover {
+    box-shadow: var(--card-interactive);
+    transform: translateY(-2px);
+  }
+  .card-interactive:active {
+    transform: translateY(0);
+  }
+
+  /* ——— Legacy card-hover (alias) ——— */
   .card-hover {
     @apply transition-all duration-200 ease-out;
   }
@@ -124,6 +168,13 @@
     @apply shadow-lg -translate-y-0.5;
     box-shadow: 0 8px 25px hsl(215 65% 22% / 0.08);
   }
+
+  /* ——— Buttons ——— */
+  .btn-press {
+    @apply transition-all duration-150 active:scale-[0.97];
+  }
+
+  /* ——— Chips & Badges ——— */
   .chip {
     @apply inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-150 cursor-pointer select-none;
   }
@@ -142,10 +193,34 @@
   .badge-declined {
     @apply bg-destructive/15 text-destructive;
   }
+
+  /* ——— Utility ——— */
   .glass-card {
     @apply bg-card/80 backdrop-blur-md border border-border/50;
   }
   .skeleton {
     @apply animate-pulse rounded-lg bg-muted;
+  }
+
+  /* ——— Seat dots ——— */
+  .seat-dot {
+    @apply w-2 h-2 rounded-full transition-colors duration-200;
+  }
+  .seat-dot-filled {
+    @apply bg-primary;
+  }
+  .seat-dot-empty {
+    @apply bg-muted;
+  }
+
+  /* ——— Time pill ——— */
+  .time-pill {
+    @apply text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .time-pill-soon {
+    @apply bg-success/15 text-success;
+  }
+  .time-pill-later {
+    @apply bg-info/15 text-info;
   }
 }

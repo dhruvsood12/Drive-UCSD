@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { DEMO_CHAT_THREADS, type DemoChatThread } from '@/lib/mockTripsData';
+import { DEMO_CHAT_THREADS, type DemoChatThread } from '@/demo/demoData';
 import { ArrowLeft, Search, MessageCircle, MapPin, Clock, Radio } from 'lucide-react';
 import { motion } from 'framer-motion';
 

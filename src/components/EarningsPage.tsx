@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign, TrendingUp, Car, Star, MapPin, BarChart3, Calendar, ArrowRight } from 'lucide-react';
 import DriverTierBadge from './DriverTierBadge';
-import { DEMO_WEEKLY_EARNINGS } from '@/lib/mockTripsData';
+import { DEMO_WEEKLY_EARNINGS, DEMO_DRIVER_STATS, DEMO_NEXT_RIDE, DEMO_GROWTH_TIPS } from '@/demo/demoData';
 
 interface TripEarning {
   id: string;
@@ -84,7 +84,7 @@ const EarningsPage = () => {
   const topDest = [...destMap.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
 
   // Next scheduled ride (demo)
-  const nextRide = isDemo ? { destination: 'Pacific Beach', time: 'Today, 4:30 PM', riders: 2 } : null;
+  const nextRide = isDemo ? { destination: DEMO_NEXT_RIDE.destination, time: new Date(DEMO_NEXT_RIDE.departureTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), riders: DEMO_NEXT_RIDE.riders } : null;
 
   if (loading) {
     return (
@@ -158,15 +158,15 @@ const EarningsPage = () => {
       <div className="card-elevated p-5 mb-5">
         <h3 className="text-card-title mb-3">💡 Growth Tips</h3>
         <div className="space-y-2.5">
-          {[
-            { tip: 'Post trips during peak hours (7-9am, 4-7pm) for more riders', tag: 'Timing' },
-            { tip: `Your top destination is ${topDest} — try new routes for variety`, tag: 'Routes' },
-            { tip: 'Complete your profile to boost compatibility scores', tag: 'Profile' },
-            { tip: 'Maintain a high rating by being punctual and friendly', tag: 'Rating' },
-          ].map((item, i) => (
+          {(isDemo ? DEMO_GROWTH_TIPS : [
+            `Post trips during peak hours (7-9am, 4-7pm) for more riders`,
+            `Your top destination is ${topDest} — try new routes for variety`,
+            `Complete your profile to boost compatibility scores`,
+            `Maintain a high rating by being punctual and friendly`,
+          ]).map((tip, i) => (
             <div key={i} className="flex items-start gap-3">
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold shrink-0 mt-0.5">{item.tag}</span>
-              <p className="text-xs text-muted-foreground">{item.tip}</p>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold shrink-0 mt-0.5">Tip</span>
+              <p className="text-xs text-muted-foreground">{tip}</p>
             </div>
           ))}
         </div>

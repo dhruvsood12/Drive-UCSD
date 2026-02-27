@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
+import { DEMO_USER_PROFILE } from '@/demo/demoData';
 
 export interface Profile {
   id: string;
@@ -34,24 +35,7 @@ interface AuthContextType {
   exitDemoMode: () => void;
 }
 
-const DEMO_PROFILE: Profile = {
-  id: 'demo-user',
-  email: 'demo@ucsd.edu',
-  preferred_name: 'Demo Rider',
-  role: 'rider',
-  college: 'Sixth',
-  year: '2nd',
-  major: 'Computer Science',
-  interests: ['surfing', 'coding', 'boba', 'hiking'],
-  clubs: ['ACM', 'Surf Club'],
-  age: 20,
-  gender: null,
-  avatar_url: null,
-  music_tag: 'indie',
-  onboarding_complete: true,
-  created_at: new Date().toISOString(),
-};
-
+const DEMO_PROFILE: Profile = DEMO_USER_PROFILE as unknown as Profile;
 const DEMO_SESSION = { access_token: 'demo', refresh_token: 'demo' } as unknown as Session;
 const DEMO_USER = { id: 'demo-user', email: 'demo@ucsd.edu' } as unknown as User;
 
@@ -71,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from('profiles')
       .select('*')
@@ -79,29 +63,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .single();
     if (data) setProfile(data as unknown as Profile);
     return data as unknown as Profile | null;
-  };
+  }, []);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (isDemo) return;
     if (user) await fetchProfile(user.id);
-  };
+  }, [isDemo, user, fetchProfile]);
 
-  const enterDemoMode = () => {
+  const enterDemoMode = useCallback(() => {
     localStorage.setItem('demo', 'true');
     setIsDemo(true);
     setSession(DEMO_SESSION);
     setUser(DEMO_USER);
     setProfile(DEMO_PROFILE);
     setLoading(false);
-  };
+  }, []);
 
-  const exitDemoMode = () => {
+  const exitDemoMode = useCallback(() => {
     localStorage.removeItem('demo');
     setIsDemo(false);
     setSession(null);
     setUser(null);
     setProfile(null);
-  };
+  }, []);
 
   useEffect(() => {
     // Check for demo mode on mount
@@ -110,47 +94,70 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setTimeout(() => fetchProfile(session.user.id), 0);
+    let mounted = true;
+
+    // Set up auth listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      if (!mounted) return;
+
+      // If switching from demo to real auth, exit demo
+      if (isDemo && newSession) {
+        localStorage.removeItem('demo');
+        setIsDemo(false);
+      }
+
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+
+      if (newSession?.user) {
+        // Fetch profile before setting loading=false
+        const prof = await fetchProfile(newSession.user.id);
+        if (mounted) setLoading(false);
       } else {
         setProfile(null);
+        if (mounted) setLoading(false);
       }
-      setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
+    // Then get initial session
+    supabase.auth.getSession().then(async ({ data: { session: initSession } }) => {
+      if (!mounted) return;
+
+      setSession(initSession);
+      setUser(initSession?.user ?? null);
+
+      if (initSession?.user) {
+        await fetchProfile(initSession.user.id);
       }
-      setLoading(false);
+      if (mounted) setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({ email, password });
     return { error };
-  };
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
+    // If in demo mode and user logs in for real, exit demo
+    if (isDemo) exitDemoMode();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
-  };
+  }, [isDemo, exitDemoMode]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     if (isDemo) {
       exitDemoMode();
       return;
     }
     await supabase.auth.signOut();
     setProfile(null);
-  };
+  }, [isDemo, exitDemoMode]);
 
   return (
     <AuthContext.Provider value={{ session, user, profile, loading, isDemo, signUp, signIn, signOut, refreshProfile, enterDemoMode, exitDemoMode }}>

@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Send, MapPin, Music, Clock, Users, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { DEMO_CHAT_MESSAGES, DEMO_CHAT_THREADS } from '@/demo/demoData';
+import { useDemoGuard } from '@/hooks/useDemoGuard';
 
 interface ChatMessage {
   id: string;
@@ -23,7 +25,8 @@ interface Participant {
 const ChatDetail = () => {
   const { chatId } = useParams<{ chatId: string }>();
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, isDemo } = useAuth();
+  const { guardDemo } = useDemoGuard();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -34,6 +37,11 @@ const ChatDetail = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const isPast = trip ? new Date(trip.departure_time) < new Date(Date.now() - 24 * 60 * 60 * 1000) : false;
+
+  // Demo mode: load demo chat messages
+  const demoThread = chatId ? DEMO_CHAT_THREADS.find(t => t.tripId === chatId) : null;
+  const demoMessages = chatId ? (DEMO_CHAT_MESSAGES[chatId] || []) : [];
+
 
   useEffect(() => {
     if (!chatId) return;

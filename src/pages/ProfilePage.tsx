@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import ReportModal from '@/components/ReportModal';
 import WalletCard from '@/components/WalletCard';
 import { useBlocking } from '@/hooks/useBlocking';
+import { DEMO_USER_PROFILE, DEMO_USER_STATS } from '@/demo/demoData';
 
 interface DbProfile {
   id: string;
@@ -57,7 +58,7 @@ const RIDE_BADGES = [
 const ProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { profile: myProfile, user, refreshProfile } = useAuth();
+  const { profile: myProfile, user, refreshProfile, isDemo } = useAuth();
   const [profileData, setProfileData] = useState<DbProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -72,29 +73,36 @@ const ProfilePage = () => {
 
   useEffect(() => {
     if (!targetId) return;
+
+    // Demo mode: use demo profile data
+    if (isDemo && isOwnProfile) {
+      setProfileData(DEMO_USER_PROFILE as unknown as DbProfile);
+      setRideCount(DEMO_USER_STATS.totalRides);
+      setAvgRating(DEMO_USER_STATS.rating);
+      setLoading(false);
+      return;
+    }
+
     const fetch = async () => {
       setLoading(true);
       const { data } = await supabase.from('profiles').select('*').eq('id', targetId).single();
       if (data) setProfileData(data as unknown as DbProfile);
 
-      // ride count
       const { count } = await supabase.from('trip_participants').select('*', { count: 'exact', head: true }).eq('user_id', targetId);
       setRideCount(count || 0);
 
-      // avg rating
       const { data: ratings } = await supabase.from('ratings').select('score').eq('rated_id', targetId);
       if (ratings && ratings.length > 0) {
         setAvgRating(Math.round((ratings.reduce((s, r) => s + r.score, 0) / ratings.length) * 10) / 10);
       }
 
-      // Vehicle info
       const { data: vehicle } = await supabase.from('driver_vehicles').select('car_make, car_model, car_year, car_color, license_plate').eq('user_id', targetId).maybeSingle();
       if (vehicle) setVehicleInfo(vehicle as any);
 
       setLoading(false);
     };
     fetch();
-  }, [targetId]);
+  }, [targetId, isDemo, isOwnProfile]);
 
   const compatibility = useMemo(() => {
     if (!myProfile || !profileData || isOwnProfile) return null;
@@ -323,10 +331,22 @@ const ProfilePage = () => {
           {/* About */}
           <Section title="About">
             <p className="text-sm text-foreground leading-relaxed">
-              {p.year} year {p.major} student at {p.college} College.
-              {p.interests.length > 0 && ` Into ${p.interests.slice(0, 3).join(', ')}.`}
+              {isDemo && isOwnProfile ? DEMO_USER_STATS.bio : (
+                `${p.year} year ${p.major} student at ${p.college} College.${p.interests.length > 0 ? ` Into ${p.interests.slice(0, 3).join(', ')}.` : ''}`
+              )}
             </p>
           </Section>
+
+          {/* Badges (demo) */}
+          {isDemo && isOwnProfile && (
+            <Section title="Ride Badges">
+              <div className="flex flex-wrap gap-2">
+                {DEMO_USER_STATS.badges.map(badge => (
+                  <span key={badge} className="text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary font-medium">{badge}</span>
+                ))}
+              </div>
+            </Section>
+          )}
 
           {/* Academic */}
           <Section title="Academic">

@@ -109,59 +109,6 @@ export const MOCK_DB_TRIPS: DbTrip[] = [
   { id: 'mock-20', driver_id: 'd6', from_location: 'Sixth College', to_location: 'Encinitas', departure_time: h(8), seats_total: 4, seats_available: 4, comp_rate: 10, notes: 'Moonlight beach day trip! Pack lunch 🌊', vibe: 'hype', coordinates: { lat: 33.0370, lng: -117.2920 }, created_at: now.toISOString(), driver: drivers.d6 },
 ];
 
-// ——— Demo Chat Data ———
-export interface DemoChatThread {
-  tripId: string;
-  destination: string;
-  driverName: string;
-  driverAvatar: string;
-  lastMessage: string;
-  lastMessageAt: string;
-  participants: number;
-  unread: number;
-  isPast: boolean;
-  isActiveRide: boolean;
-}
-
-export const DEMO_CHAT_THREADS: DemoChatThread[] = [
-  { tripId: 'mock-1', destination: 'Pacific Beach', driverName: 'Alex Chen', driverAvatar: avatar('alex-chen'), lastMessage: 'Leaving in 10! Meet at Geisel loop 🚗', lastMessageAt: new Date(now.getTime() - 5 * 60000).toISOString(), participants: 3, unread: 2, isPast: false, isActiveRide: true },
-  { tripId: 'mock-2', destination: 'Convoy St', driverName: 'Maya Patel', driverAvatar: avatar('maya-patel'), lastMessage: 'Should we try the new ramen place?', lastMessageAt: new Date(now.getTime() - 45 * 60000).toISOString(), participants: 3, unread: 0, isPast: false, isActiveRide: false },
-  { tripId: 'mock-3', destination: 'Downtown Gaslamp', driverName: 'Jordan Lee', driverAvatar: avatar('jordan-lee'), lastMessage: 'Got extra tickets if anyone needs!', lastMessageAt: new Date(now.getTime() - 2 * 3600000).toISOString(), participants: 4, unread: 1, isPast: false, isActiveRide: false },
-  { tripId: 'mock-9', destination: 'North Park', driverName: 'Nina Gonzalez', driverAvatar: avatar('nina-gonzalez'), lastMessage: 'Dark Horse Coffee was amazing ☕', lastMessageAt: new Date(now.getTime() - 24 * 3600000).toISOString(), participants: 4, unread: 0, isPast: true, isActiveRide: false },
-  { tripId: 'mock-12', destination: 'Mission Beach', driverName: 'Sam Okafor', driverAvatar: avatar('sam-okafor'), lastMessage: 'Thanks for the ride! Great sunset 🌅', lastMessageAt: new Date(now.getTime() - 48 * 3600000).toISOString(), participants: 3, unread: 0, isPast: true, isActiveRide: false },
-  { tripId: 'mock-7', destination: 'UTC Westfield', driverName: 'Ethan Kim', driverAvatar: avatar('ethan-kim'), lastMessage: 'Split the Costco membership? 😂', lastMessageAt: new Date(now.getTime() - 72 * 3600000).toISOString(), participants: 3, unread: 0, isPast: true, isActiveRide: false },
-];
-
-// ——— Demo Wallet Transactions ———
-export interface DemoTransaction {
-  id: string;
-  isOutgoing: boolean;
-  amount: number;
-  description: string;
-  date: string;
-  otherParty: string;
-}
-
-export const DEMO_TRANSACTIONS: DemoTransaction[] = [
-  { id: 'tx-1', isOutgoing: true, amount: 5, description: 'Trip to Pacific Beach', date: new Date(now.getTime() - 2 * 3600000).toISOString(), otherParty: 'Alex Chen' },
-  { id: 'tx-2', isOutgoing: false, amount: 8, description: 'Ride to Downtown Gaslamp', date: new Date(now.getTime() - 24 * 3600000).toISOString(), otherParty: 'Jordan Lee' },
-  { id: 'tx-3', isOutgoing: true, amount: 6, description: 'Trip to Convoy St', date: new Date(now.getTime() - 36 * 3600000).toISOString(), otherParty: 'Maya Patel' },
-  { id: 'tx-4', isOutgoing: false, amount: 12, description: 'Airport shuttle earnings', date: new Date(now.getTime() - 48 * 3600000).toISOString(), otherParty: 'Lily Nguyen' },
-  { id: 'tx-5', isOutgoing: true, amount: 3, description: 'UTC Target run', date: new Date(now.getTime() - 72 * 3600000).toISOString(), otherParty: 'Sam Okafor' },
-  { id: 'tx-6', isOutgoing: false, amount: 5, description: 'Beach ride earnings', date: new Date(now.getTime() - 96 * 3600000).toISOString(), otherParty: 'Sofia Rivera' },
-  { id: 'tx-7', isOutgoing: true, amount: 7, description: 'Trip to Hillcrest', date: new Date(now.getTime() - 120 * 3600000).toISOString(), otherParty: 'Jordan Lee' },
-  { id: 'tx-8', isOutgoing: false, amount: 4, description: 'Grocery run earnings', date: new Date(now.getTime() - 144 * 3600000).toISOString(), otherParty: 'Ethan Kim' },
-  { id: 'tx-9', isOutgoing: true, amount: 10, description: 'Airport trip', date: new Date(now.getTime() - 168 * 3600000).toISOString(), otherParty: 'Carlos Martinez' },
-  { id: 'tx-10', isOutgoing: false, amount: 6, description: 'North Park ride', date: new Date(now.getTime() - 192 * 3600000).toISOString(), otherParty: 'Nina Gonzalez' },
-];
-
-// ——— Demo Driver Dashboard Data ———
-export const DEMO_WEEKLY_EARNINGS = [
-  { day: 'Mon', amount: 18 },
-  { day: 'Tue', amount: 12 },
-  { day: 'Wed', amount: 25 },
-  { day: 'Thu', amount: 8 },
-  { day: 'Fri', amount: 32 },
-  { day: 'Sat', amount: 45 },
-  { day: 'Sun', amount: 22 },
-];
+// Re-export demo data from centralized location for backward compat
+export { DEMO_CHAT_THREADS, DEMO_TRANSACTIONS, DEMO_WEEKLY_EARNINGS } from '@/demo/demoData';
+export type { DemoChatThread, DemoTransaction } from '@/demo/demoData';

@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, loading, isDemo } = useAuth();
 
   if (loading) {
     return (
@@ -11,6 +11,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
+
+  // Demo mode bypasses auth entirely
+  if (isDemo) return <>{children}</>;
 
   if (!session) return <Navigate to="/login" replace />;
 

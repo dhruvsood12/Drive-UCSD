@@ -1,14 +1,22 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Eye } from 'lucide-react';
 
 const Login = () => {
-  const { session, profile, signIn } = useAuth();
+  const { session, profile, signIn, enterDemoMode } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  // Auto-enter demo mode from URL param
+  if (searchParams.get('demo') === '1') {
+    enterDemoMode();
+    return <Navigate to="/" replace />;
+  }
 
   if (session && profile?.onboarding_complete) return <Navigate to="/" replace />;
   if (session && profile && !profile.onboarding_complete) return <Navigate to="/onboarding" replace />;
@@ -20,6 +28,10 @@ const Login = () => {
     const { error } = await signIn(email, password);
     if (error) setError(error.message);
     setLoading(false);
+  };
+
+  const handleDemoMode = () => {
+    enterDemoMode();
   };
 
   return (
@@ -74,6 +86,26 @@ const Login = () => {
               {loading ? 'Signing in...' : 'Log In'}
             </button>
           </form>
+
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-card px-2 text-muted-foreground">or</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleDemoMode}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 border-dashed border-secondary text-secondary-foreground bg-secondary/10 text-sm font-semibold hover:bg-secondary/20 transition-all"
+          >
+            <Eye className="w-4 h-4" />
+            Continue as Demo User
+          </button>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Explore the app instantly — no account needed
+          </p>
 
           <p className="text-sm text-muted-foreground text-center mt-4">
             Don't have an account?{' '}

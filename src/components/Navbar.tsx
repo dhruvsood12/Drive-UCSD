@@ -3,7 +3,7 @@ import { useDriverRequests } from '@/hooks/useRideRequests';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useWallet } from '@/hooks/useWallet';
 import ThemeToggle from './ThemeToggle';
-import { Plus, LogOut, Shield, History, DollarSign, ChevronDown, MessageCircle, Wallet } from 'lucide-react';
+import { Plus, LogOut, Shield, History, DollarSign, ChevronDown, MessageCircle, Wallet, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 type Tab = 'feed' | 'map' | 'requests' | 'earnings' | 'history' | 'safety';
 
 const Navbar = () => {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, isDemo } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('feed');
   const [role, setRole] = useState<'rider' | 'driver'>(
     profile?.role === 'driver' ? 'driver' : 'rider'
@@ -204,7 +204,14 @@ const Navbar = () => {
         </div>
       </div>
 
-      
+      {isDemo && (
+        <div className="bg-secondary/20 border-t border-secondary/30 px-4 py-1.5 flex items-center justify-center gap-2">
+          <Eye className="w-3.5 h-3.5 text-secondary-foreground/70" />
+          <span className="text-xs font-medium text-secondary-foreground/70">
+            Demo Mode — <button onClick={handleSignOut} className="underline hover:text-secondary-foreground">Exit</button> or <a href="/signup" className="underline hover:text-secondary-foreground">Sign up</a> for full access
+          </span>
+        </div>
+      )}
     </nav>
   );
 };

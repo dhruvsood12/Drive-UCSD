@@ -25,10 +25,41 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  isDemo: boolean;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  enterDemoMode: () => void;
+  exitDemoMode: () => void;
+}
+
+const DEMO_PROFILE: Profile = {
+  id: 'demo-user',
+  email: 'demo@ucsd.edu',
+  preferred_name: 'Demo Rider',
+  role: 'rider',
+  college: 'Sixth',
+  year: '2nd',
+  major: 'Computer Science',
+  interests: ['surfing', 'coding', 'boba', 'hiking'],
+  clubs: ['ACM', 'Surf Club'],
+  age: 20,
+  gender: null,
+  avatar_url: null,
+  music_tag: 'indie',
+  onboarding_complete: true,
+  created_at: new Date().toISOString(),
+};
+
+const DEMO_SESSION = { access_token: 'demo', refresh_token: 'demo' } as unknown as Session;
+const DEMO_USER = { id: 'demo-user', email: 'demo@ucsd.edu' } as unknown as User;
+
+function isDemoActive(): boolean {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('demo') === '1') return true;
+  return localStorage.getItem('demo') === 'true';
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDemo, setIsDemo] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -50,15 +82,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshProfile = async () => {
+    if (isDemo) return;
     if (user) await fetchProfile(user.id);
   };
 
+  const enterDemoMode = () => {
+    localStorage.setItem('demo', 'true');
+    setIsDemo(true);
+    setSession(DEMO_SESSION);
+    setUser(DEMO_USER);
+    setProfile(DEMO_PROFILE);
+    setLoading(false);
+  };
+
+  const exitDemoMode = () => {
+    localStorage.removeItem('demo');
+    setIsDemo(false);
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+  };
+
   useEffect(() => {
+    // Check for demo mode on mount
+    if (isDemoActive()) {
+      enterDemoMode();
+      return;
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Use setTimeout to avoid Supabase auth deadlock
         setTimeout(() => fetchProfile(session.user.id), 0);
       } else {
         setProfile(null);
@@ -89,12 +144,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    if (isDemo) {
+      exitDemoMode();
+      return;
+    }
     await supabase.auth.signOut();
     setProfile(null);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signUp, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, isDemo, signUp, signIn, signOut, refreshProfile, enterDemoMode, exitDemoMode }}>
       {children}
     </AuthContext.Provider>
   );

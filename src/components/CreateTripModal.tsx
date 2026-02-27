@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDemoGuard } from '@/hooks/useDemoGuard';
 import { supabase } from '@/integrations/supabase/client';
 import { DESTINATIONS, DESTINATION_CATEGORIES, TRIP_VIBES, VIBE_CATEGORIES } from '@/lib/destinations';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,6 +9,7 @@ import { X, MapPin, Search } from 'lucide-react';
 
 const CreateTripModal = () => {
   const { profile } = useAuth();
+  const { guardDemo } = useDemoGuard();
   const [open, setOpen] = useState(false);
   const [destination, setDestination] = useState('Pacific Beach');
   const [departureTime, setDepartureTime] = useState('');
@@ -20,7 +22,10 @@ const CreateTripModal = () => {
   const [destSearch, setDestSearch] = useState('');
 
   useEffect(() => {
-    const handler = () => setOpen(true);
+    const handler = () => {
+      if (guardDemo('Creating trips')) return;
+      setOpen(true);
+    };
     window.addEventListener('open-create-trip', handler);
     return () => window.removeEventListener('open-create-trip', handler);
   }, []);

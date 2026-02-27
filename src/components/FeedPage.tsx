@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTrips, DbTrip } from '@/hooks/useTrips';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDemoGuard } from '@/hooks/useDemoGuard';
 import { requestSeat, getMyRequestForTrip } from '@/hooks/useRideRequests';
 import { dbProfileToFeatureProfile, computeMLCompatibilitySync } from '@/ml';
 import { useMLWeights } from '@/hooks/useMLCompatibility';
@@ -235,6 +236,7 @@ const FeedPage = () => {
 
 const RealTripCard = ({ trip, onUpdate, mlWeights }: { trip: DbTrip; onUpdate: () => void; mlWeights: any }) => {
   const { profile } = useAuth();
+  const { guardDemo } = useDemoGuard();
   const [showProfile, setShowProfile] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [requesting, setRequesting] = useState(false);
@@ -281,6 +283,7 @@ const RealTripCard = ({ trip, onUpdate, mlWeights }: { trip: DbTrip; onUpdate: (
   const isMockTrip = trip.id.startsWith('mock-');
 
   const handleRequestSeat = async () => {
+    if (guardDemo('Requesting a seat')) return;
     if (!profile) return;
     if (isMockTrip) {
       toast.info('Demo trip — sign up as a driver to create real trips!');

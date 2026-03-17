@@ -5,7 +5,7 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg)](https://typescriptlang.org)
 [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev)
-[![CI](https://github.com/YOUR_USERNAME/drive-ucsd/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/drive-ucsd/actions)
+[![CI](https://github.com/YOUR_USERNAME/drive-ucsd/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/drive-ucsd/actions) 
 
 <!--
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://drive-ucsd.vercel.app)

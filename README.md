@@ -22,11 +22,6 @@ The fastest way to explore Drive UCSD:
 2. Click **"Continue as Demo User"** on the login screen
 3. Browse the feed, map, and matching — all populated with sample data
 
-Or append `?demo=1` to any URL:
-```
-https://YOUR_APP_URL/?demo=1
-```
-
 > Demo mode is read-only. Destructive actions (payments, posting trips) show a toast explaining the limitation.
 
 ---

@@ -63,7 +63,7 @@ The fastest way to explore Drive UCSD:
 
 ```bash
 # 1. Clone
-git clone https://github.com/YOUR_USERNAME/drive-ucsd.git
+git clone https://github.com/dhruvsood12/drive-ucsd.git
 cd drive-ucsd
 
 # 2. Install

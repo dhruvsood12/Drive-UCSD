@@ -14,11 +14,11 @@
 
 ---
 
-## 🎮 Try the Demo (No Account Needed)
+## 🎮 Demo (No Account Needed)
 
 The fastest way to explore Drive UCSD:
 
-1. Visit the app URL (or run locally — see [Quick Start](#-quick-start))
+1. run locally — see [Quick Start](#-quick-start)
 2. Click **"Continue as Demo User"** on the login screen
 3. Browse the feed, map, and matching — all populated with sample data
 
